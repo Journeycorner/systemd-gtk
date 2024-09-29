@@ -1,0 +1,11 @@
+[package]
+name = "systemd-gtk"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+adw = { version = "0.7", package = "libadwaita", features = ["v1_6"] }
+gtk = { version = "0.9", package = "gtk4", features = ["gnome_47"] }
+
+[build-dependencies]
+glib-build-tools = "0.20.0"
