@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 adw = { version = "0.7", package = "libadwaita", features = ["v1_6"] }
 gtk = { version = "0.9", package = "gtk4", features = ["gnome_47"] }
+systemctl = "0.3.1"
 
 [build-dependencies]
 glib-build-tools = "0.20.0"
