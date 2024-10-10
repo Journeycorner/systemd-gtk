@@ -2,9 +2,10 @@ mod imp;
 
 use glib::Object;
 use gtk::glib::clone;
-use gtk::prelude::{BoxExt, Cast, CastNone, GtkWindowExt, ListItemExt};
+use gtk::glib::property::PropertyGet;
+use gtk::prelude::{BoxExt, Cast, CastNone, GtkWindowExt, ListBoxRowExt, ListItemExt, WidgetExt};
 use gtk::subclass::prelude::ObjectSubclassIsExt;
-use gtk::{gio, glib, Label, ListBoxRow, ListItem, SignalListItemFactory, Switch};
+use gtk::{gio, glib, Label, ListBoxRow, ListItem, SignalListItemFactory, SingleSelection, Switch};
 use systemctl::UnitList;
 
 glib::wrapper! {
@@ -93,13 +94,12 @@ impl Window {
                 }
             ),
         );
-        // TODO
-        // let selection_model = SingleSelection::new(Some(model));
-
-        // for unit in units {
-        //     let unit_object = UnitObject::new(unit);
-        //     Self::build_row(&list_box, unit_object);
-        // }
+        let selection_model = SingleSelection::new(Some(model));
+        list_box.connect_row_activated(move |list_box, position| {
+            let foo = position.child().unwrap().downcast::<gtk::Box>().unwrap()
+                .first_child().unwrap().downcast::<Label>().unwrap();
+            println!("{}", foo.label().as_str());
+        });
     }
 
     fn build_row(unit: &UnitObject) -> ListBoxRow {
@@ -121,17 +121,6 @@ impl Window {
         let item = ListBoxRow::builder()
             .child(&bxx)
             .build();
-        // TODO
-        let switch_clone = switch.clone();
-        /*switch.connect_state_set(move |_, target_state| {
-            if !target_state {
-                systemctl::stop(&*unit.unit_file()).expect("Could not stop");
-            } else {
-                systemctl::start(&*unit.unit_file()).expect("Could not start");
-            }
-            switch_clone.set_active(target_state);
-            Propagation::Stop
-        });*/
         item
     }
     // ANCHOR_END: setup_collections
