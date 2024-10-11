@@ -1,25 +1,13 @@
 mod imp;
 
+use crate::systemd;
+use crate::systemd::UnitObject;
 use glib::Object;
 use gtk::glib::clone;
 use gtk::glib::property::PropertyGet;
 use gtk::prelude::{BoxExt, Cast, CastNone, GtkWindowExt, ListBoxRowExt, ListItemExt, WidgetExt};
 use gtk::subclass::prelude::ObjectSubclassIsExt;
 use gtk::{gio, glib, Label, ListBoxRow, ListItem, SignalListItemFactory, SingleSelection, Switch};
-use systemctl::UnitList;
-
-glib::wrapper! {
-    pub struct UnitObject(ObjectSubclass<imp::UnitObject>);
-}
-
-impl UnitObject {
-    pub fn new(unit: &UnitList) -> Self {
-        Object::builder()
-            .property("unit_file", &unit.unit_file)
-            .property("state", &unit.state)
-            .build()
-    }
-}
 
 glib::wrapper! {
     pub struct Window(ObjectSubclass<imp::Window>)
@@ -36,13 +24,9 @@ impl Window {
 
     // ANCHOR: setup_collections
     fn setup_collections(&self) {
-        // Create a `ListBox` and add labels with integers from 0 to 100
         let list_box = self.imp().collections_list.get();
 
-        let units = systemctl::list_units_full(Some("service"), None, None).unwrap()
-            .iter()
-            .map(UnitObject::new)
-            .collect::<Vec<UnitObject>>();
+        let units = systemd::units();
 
         // Create new model
         let model = gio::ListStore::new::<UnitObject>();
