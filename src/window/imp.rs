@@ -1,14 +1,14 @@
 use glib::subclass::InitializingObject;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use gtk::{glib, CompositeTemplate, ListBox};
+use gtk::{glib, ColumnView, CompositeTemplate};
 
 // Object holding the state
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/com/journeycorner/systemd-gtk/window.ui")]
 pub struct Window {
     #[template_child]
-    pub collections_list: TemplateChild<ListBox>,
+    pub collections_list: TemplateChild<ColumnView>,
 }
 
 // The central trait for subclassing a GObject

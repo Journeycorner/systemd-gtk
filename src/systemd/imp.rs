@@ -1,8 +1,9 @@
 use gtk::glib;
 use gtk::glib::Properties;
 use std::cell::RefCell;
+use adw::glib::Type;
 use gtk::subclass::prelude::{*};
-use gtk::prelude::ObjectExt;
+use gtk::prelude::{ObjectExt, StaticType};
 
 // Object holding the state
 #[derive(Properties, Default)]
@@ -12,7 +13,10 @@ pub struct UnitObject {
     unit_file: RefCell<String>,
 
     #[property(get, set)]
-    state: RefCell<String>,
+    load: RefCell<Option<String>>,
+
+    #[property(get, set)]
+    description: RefCell<Option<String>>,
 }
 
 // The central trait for subclassing a GObject
@@ -25,3 +29,10 @@ impl ObjectSubclass for UnitObject {
 // Trait shared by all GObjects
 #[glib::derived_properties]
 impl ObjectImpl for UnitObject {}
+
+impl StaticType for UnitObject {
+fn static_type() -> Type {
+    // This ensures UnitObject is properly registered with the GObject type system
+    Self::static_type()
+}
+}
