@@ -7,10 +7,11 @@ use adw::prelude::{BoxExt, Cast, CastNone, ListItemExt};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib};
 use gtk::{ColumnViewColumn, CustomFilter, CustomSorter, FilterListModel, Label, ListBoxRow, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
+use gtk::prelude::WidgetExt;
 
 glib::wrapper! {
     pub struct Window(ObjectSubclass<imp::Window>)
-        @extends gtk::ApplicationWindow, gtk::Window, gtk::Widget,
+        @extends adw::ApplicationWindow, gtk::ApplicationWindow, gtk::Window, gtk::Widget,
         @implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable,
                     gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
@@ -24,6 +25,7 @@ impl Window {
     // ANCHOR: setup_collections
     fn setup_collections(&self) {
         let column_view = self.imp().collections_list.get();
+        column_view.set_visible(true);
 
         let units = systemd::units();
 

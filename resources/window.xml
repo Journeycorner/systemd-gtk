@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+    <template class="MyGtkAppWindow" parent="AdwApplicationWindow">
+        <property name="title">systemd GTK</property>
+        <property name="default-width">800</property>
+        <property name="default-height">600</property>
+
+        <property name="content">
+            <object class="AdwToolbarView">
+                <child type="top">
+                    <object class="AdwHeaderBar">
+                        <child type="start">
+                            <object class="GtkToggleButton">
+                                <property name="icon-name">system-search</property>
+                                <property name="tooltip-text" translatable="yes">Filter</property>
+                                <property name="action-name">win.filter-list</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <property name="content">
+                    <object class="GtkScrolledWindow">
+                        <property name="child">
+                            <object class="GtkColumnView" id="collections_list">
+                            </object>
+                        </property>
+                    </object>
+                </property>
+            </object>
+        </property>
+    </template>
+</interface>
