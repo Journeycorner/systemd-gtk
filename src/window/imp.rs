@@ -1,7 +1,8 @@
-use glib::subclass::InitializingObject;
-use gtk::prelude::*;
-use gtk::subclass::prelude::*;
-use gtk::{glib, ColumnView, CompositeTemplate};
+use adw::glib;
+use adw::glib::subclass::InitializingObject;
+use adw::prelude::*;
+use adw::subclass::prelude::*;
+use gtk::{ColumnView, CompositeTemplate};
 
 // Object holding the state
 #[derive(CompositeTemplate, Default)]

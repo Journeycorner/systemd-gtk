@@ -1,9 +1,9 @@
-use gtk::glib;
-use gtk::glib::Properties;
+use adw::glib;
+use adw::glib::Properties;
 use std::cell::RefCell;
 use adw::glib::Type;
-use gtk::subclass::prelude::{*};
-use gtk::prelude::{ObjectExt, StaticType};
+use adw::subclass::prelude::{*};
+use adw::prelude::{ObjectExt, StaticType};
 
 // Object holding the state
 #[derive(Properties, Default)]
@@ -14,6 +14,9 @@ pub struct UnitObject {
 
     #[property(get, set)]
     load: RefCell<Option<String>>,
+
+    #[property(get, set)]
+    active: RefCell<Option<String>>,
 
     #[property(get, set)]
     description: RefCell<Option<String>>,

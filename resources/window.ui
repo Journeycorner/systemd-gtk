@@ -2,8 +2,9 @@
 <interface>
   <template class="MyGtkAppWindow" parent="GtkApplicationWindow">
     <property name="title">systemd GTK</property>
-    <property name="default-width">400</property>
-    <property name="default-height">300</property>
+    <property name="default-width">800</property>
+    <property name="default-height">600</property>
+
     <child>
         <object class="GtkScrolledWindow">
             <property name="child">
