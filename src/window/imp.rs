@@ -1,4 +1,5 @@
-use adw::glib;
+use adw::ffi::AdwSplitButton;
+use adw::{glib, SplitButton};
 use adw::glib::subclass::InitializingObject;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
@@ -13,6 +14,9 @@ pub struct Window {
 
     #[template_child]
     pub search_filter: TemplateChild<SearchEntry>,
+
+    #[template_child]
+    pub action_button: TemplateChild<SplitButton>,
 }
 
 // The central trait for subclassing a GObject

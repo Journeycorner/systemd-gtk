@@ -1,7 +1,7 @@
 mod imp;
 
-use adw::glib::Object;
 use adw::glib;
+use adw::glib::Object;
 use systemctl::State;
 
 glib::wrapper! {
@@ -32,8 +32,18 @@ pub fn units() -> Vec<UnitObject> {
     let systemctl = systemctl::SystemCtl::default();
     systemctl.list_units_full(Some("service"), None, None).unwrap()
         .iter()
-        .take(20)
+        .take(5)
         .map(|unit| systemctl.create_unit(unit.unit_file.as_str()))
         .map(UnitObject::new)
         .collect::<Vec<UnitObject>>()
+}
+
+pub fn start(unit: UnitObject) {
+    let systemctl = systemctl::SystemCtl::default();
+    systemctl.start(unit.unit_file().as_str()).expect("Could not start unit file ");
+}
+
+pub fn stop(unit: UnitObject) {
+    let systemctl = systemctl::SystemCtl::default();
+    systemctl.stop(unit.unit_file().as_str()).expect("Could not stop unit file ");
 }

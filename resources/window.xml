@@ -23,7 +23,33 @@
                         </property>
                     </object>
                 </property>
+                <child type="bottom">
+                    <object class="GtkActionBar">
+                        <child>
+                            <object class="AdwSplitButton" id="action_button">
+                                <property name="sensitive">true</property>
+                                <property name="halign">3</property>
+                                <property name="label">Stop</property>
+                                <property name="menu-model">button_run_menu</property>
+                                <property name="focusable">false</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
             </object>
         </property>
+        <menu id="button_run_menu">
+            <section>
+                <item>
+                    <attribute name="label">Run</attribute>
+                </item>
+                <item>
+                    <attribute name="label">Run With Leak Detector</attribute>
+                </item>
+                <item>
+                    <attribute name="label">Run With Debugger</attribute>
+                </item>
+            </section>
+        </menu>
     </template>
 </interface>
