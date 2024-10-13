@@ -10,10 +10,7 @@
                 <child type="top">
                     <object class="AdwHeaderBar">
                         <child type="start">
-                            <object class="GtkToggleButton">
-                                <property name="icon-name">system-search</property>
-                                <property name="tooltip-text" translatable="yes">Filter</property>
-                                <property name="action-name">win.filter-list</property>
+                            <object class="GtkSearchEntry" id="search_filter">
                             </object>
                         </child>
                     </object>

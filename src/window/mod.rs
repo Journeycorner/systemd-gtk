@@ -1,13 +1,15 @@
 mod imp;
 
+use std::cell::RefCell;
+use std::rc::Rc;
 use crate::systemd;
 use crate::systemd::UnitObject;
 use adw::glib::Object;
-use adw::prelude::{BoxExt, Cast, CastNone, ListItemExt};
+use adw::prelude::{BoxExt, Cast, CastNone, ListItemExt, ObjectExt};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib};
-use gtk::{ColumnViewColumn, CustomFilter, CustomSorter, FilterListModel, Label, ListBoxRow, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
-use gtk::prelude::WidgetExt;
+use gtk::{ColumnViewColumn, CustomFilter, CustomSorter, FilterChange, FilterListModel, Label, ListBoxRow, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
+use gtk::prelude::{EditableExt, FilterExt, WidgetExt};
 
 glib::wrapper! {
     pub struct Window(ObjectSubclass<imp::Window>)
@@ -25,7 +27,6 @@ impl Window {
     // ANCHOR: setup_collections
     fn setup_collections(&self) {
         let column_view = self.imp().collections_list.get();
-        column_view.set_visible(true);
 
         let units = systemd::units();
 
@@ -51,18 +52,41 @@ impl Window {
         description_factory.connect_setup(Self::setup_factory());
         Self::connect_name_factory(&description_factory, |unit_object| unit_object.description().unwrap_or_default().to_string());
 
-        // // Create a column for the view
+        use std::rc::Rc;
+        use std::cell::RefCell;
+        use gtk::prelude::*;
 
+        // Create a column for the view
+        let filter_value: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
+
+        // Clone Rc for the filter closure
+        let filter_value_for_filter = Rc::clone(&filter_value);
         let filter = CustomFilter::new(move |obj| {
-            // Get `IntegerObject` from `glib::Object`
+            // Get `UnitObject` from `glib::Object`
             let unit_object = obj
                 .downcast_ref::<UnitObject>()
                 .expect("The object needs to be of type `UnitObject`.");
 
-            // unit_object.unit_file().contains("alsa")
-            true
+            // Check if unit_object's unit_file contains the filter value
+            unit_object.unit_file().contains(&filter_value_for_filter.borrow().clone())
         });
-        let filter_model = FilterListModel::new(Some(model), Some(filter.clone()));
+        let filter_clone = filter.clone();
+
+        // Now clone the Rc for the search_changed callback
+        let filter_value_for_search = Rc::clone(&filter_value);
+        let search_filter = self.imp().search_filter.get();
+
+        search_filter.connect_search_changed(move |input| {
+            // Update the filter_value inside RefCell
+            *filter_value_for_search.borrow_mut() = input.text().to_string();
+
+            // Notify that the filter has changed
+            filter.changed(FilterChange::Different);
+        });
+
+        // Now create the FilterListModel using the filter
+        let filter_model = FilterListModel::new(Some(model), Some(filter_clone));
+
         let sorter = CustomSorter::new(move |obj1, obj2| {
             // Get `UnitObject` from `glib::Object`
             let unit_object_1 = obj1

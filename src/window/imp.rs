@@ -2,7 +2,7 @@ use adw::glib;
 use adw::glib::subclass::InitializingObject;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gtk::{ColumnView, CompositeTemplate};
+use gtk::{ColumnView, CompositeTemplate, SearchEntry};
 
 // Object holding the state
 #[derive(CompositeTemplate, Default)]
@@ -10,6 +10,9 @@ use gtk::{ColumnView, CompositeTemplate};
 pub struct Window {
     #[template_child]
     pub collections_list: TemplateChild<ColumnView>,
+
+    #[template_child]
+    pub search_filter: TemplateChild<SearchEntry>,
 }
 
 // The central trait for subclassing a GObject
