@@ -188,10 +188,19 @@ impl Window {
 
             // Use the function passed as argument to get the label text
             let label_text = transform_fn(&unit_object);
-
+            let label_text_short = Self::shorten_string(label_text);
             // Set the label text
-            label.set_label(&label_text);
+            label.set_label(&label_text_short);
         });
+    }
+
+    fn shorten_string(s: String) -> String {
+        const MAX_LEN: usize = 30;
+        if s.len() > MAX_LEN {
+            format!("{}...", &s[..MAX_LEN])
+        } else {
+            s
+        }
     }
 
     fn build_row(unit: &UnitObject) -> ListBoxRow {
