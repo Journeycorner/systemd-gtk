@@ -1,25 +1,25 @@
 use adw::glib;
 use adw::glib::Properties;
-use std::cell::RefCell;
 use adw::glib::Type;
-use adw::subclass::prelude::{*};
 use adw::prelude::{ObjectExt, StaticType};
+use adw::subclass::prelude::*;
+use std::sync::Mutex;
 
 // Object holding the state
 #[derive(Properties, Default)]
 #[properties(wrapper_type = super::UnitObject)]
 pub struct UnitObject {
     #[property(get, set)]
-    unit_file: RefCell<String>,
+    unit_file: Mutex<String>,
 
     #[property(get, set)]
-    load: RefCell<Option<String>>,
+    load: Mutex<Option<String>>,
 
     #[property(get, set)]
-    active: RefCell<Option<String>>,
+    active: Mutex<Option<String>>,
 
     #[property(get, set)]
-    description: RefCell<Option<String>>,
+    description: Mutex<Option<String>>,
 }
 
 // The central trait for subclassing a GObject
@@ -34,8 +34,8 @@ impl ObjectSubclass for UnitObject {
 impl ObjectImpl for UnitObject {}
 
 impl StaticType for UnitObject {
-fn static_type() -> Type {
-    // This ensures UnitObject is properly registered with the GObject type system
-    Self::static_type()
-}
+    fn static_type() -> Type {
+        // This ensures UnitObject is properly registered with the GObject type system
+        Self::static_type()
+    }
 }

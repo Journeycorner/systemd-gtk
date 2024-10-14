@@ -2,7 +2,7 @@ mod imp;
 
 use crate::systemd;
 use crate::systemd::UnitObject;
-use adw::glib::Object;
+use adw::glib::{clone, Object};
 use adw::prelude::{BoxExt, Cast, CastNone, ListItemExt, ObjectExt};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib};
@@ -10,6 +10,7 @@ use gtk::prelude::{ActionableExtManual, EditableExt, FilterExt, SelectionModelEx
 use gtk::{ColumnView, ColumnViewColumn, CustomFilter, CustomSorter, FilterChange, FilterListModel, Label, ListBoxRow, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 glib::wrapper! {
     pub struct Window(ObjectSubclass<imp::Window>)
@@ -24,15 +25,23 @@ impl Window {
         Object::builder().property("application", app).build()
     }
 
+    fn update(model: Arc<Mutex<gio::ListStore>>) {}
+
     // ANCHOR: setup_collections
     fn setup_collections(&self) {
-        let column_view = self.imp().collections_list.get();
-        Self::setup_columns(&column_view);
+        // Create channel that can hold at most 1 message at a time
+        let (sender, receiver) = async_channel::bounded(1);
 
-        let units = systemd::units();
+        gio::spawn_blocking(move || {
+            let items = systemd::units();
+            sender.clone()
+                .send_blocking(items)
+                .expect("The channel needs to be open.");
+        });
 
         let model = gio::ListStore::new::<UnitObject>();
-        model.extend_from_slice(&units);
+        let column_view = self.imp().collections_list.get();
+        Self::setup_columns(&column_view);
 
         let filter_value: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
 
@@ -53,7 +62,7 @@ impl Window {
         self.build_search_filter(filter, Rc::clone(&filter_value));
 
         // Now create the FilterListModel using the filter
-        let filter_model = FilterListModel::new(Some(model), Some(filter_clone));
+        let filter_model = FilterListModel::new(Some(model.clone()), Some(filter_clone));
 
         let sorter = Self::build_sorter();
 
@@ -62,6 +71,17 @@ impl Window {
         let single_selection = SingleSelection::new(Some(sort_model));
         self.connect_selection_changed(&single_selection);
         column_view.set_model(Some(&single_selection));
+
+        // The main loop executes the asynchronous block
+        glib::spawn_future_local(clone!(
+            #[weak]
+            model,
+            async move {
+                while let Ok(items) = receiver.recv().await {
+                    model.extend_from_slice(&items);
+                }
+            }
+        ));
     }
 
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {
