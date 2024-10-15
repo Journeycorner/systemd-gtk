@@ -3,14 +3,13 @@ mod imp;
 use crate::systemd;
 use crate::systemd::UnitObject;
 use adw::glib::{clone, Object};
-use adw::prelude::{BoxExt, Cast, CastNone, ListItemExt, ObjectExt};
+use adw::prelude::{Cast, CastNone, ListItemExt};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib};
-use gtk::prelude::{ActionableExtManual, EditableExt, FilterExt, SelectionModelExt, WidgetExt};
-use gtk::{ColumnView, ColumnViewColumn, CustomFilter, CustomSorter, FilterChange, FilterListModel, Label, ListBoxRow, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
+use gtk::prelude::{EditableExt, FilterExt, SelectionModelExt};
+use gtk::{ColumnView, ColumnViewColumn, CustomFilter, CustomSorter, FilterChange, FilterListModel, Label, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
 
 glib::wrapper! {
     pub struct Window(ObjectSubclass<imp::Window>)
@@ -24,8 +23,6 @@ impl Window {
         // Create new window
         Object::builder().property("application", app).build()
     }
-
-    fn update(model: Arc<Mutex<gio::ListStore>>) {}
 
     // ANCHOR: setup_collections
     fn setup_collections(&self) {
@@ -86,8 +83,8 @@ impl Window {
 
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {
         let action_button_clone = self.imp().action_button.clone();
-        single_selection.connect_selection_changed(move |a, b, c| {
-            let unit_object = a.selected_item()
+        single_selection.connect_selection_changed(move |selection, _, _| {
+            let unit_object = selection.selected_item()
                 .unwrap().downcast::<UnitObject>()
                 .unwrap();
             let active = unit_object.active().unwrap().eq("active");
@@ -202,15 +199,4 @@ impl Window {
             s
         }
     }
-
-    fn build_row(unit: &UnitObject) -> ListBoxRow {
-        let label = &Label::new(Some(unit.unit_file().as_str()));
-        let bxx = gtk::Box::builder()
-            .build();
-        bxx.append(label);
-        ListBoxRow::builder()
-            .child(&bxx)
-            .build()
-    }
-    // ANCHOR_END: setup_collections
 }

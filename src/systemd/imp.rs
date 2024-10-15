@@ -34,6 +34,7 @@ impl ObjectSubclass for UnitObject {
 impl ObjectImpl for UnitObject {}
 
 impl StaticType for UnitObject {
+    #[allow(unconditional_recursion)]
     fn static_type() -> Type {
         // This ensures UnitObject is properly registered with the GObject type system
         Self::static_type()

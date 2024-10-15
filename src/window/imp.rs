@@ -1,7 +1,5 @@
-use adw::ffi::AdwSplitButton;
 use adw::{glib, SplitButton};
 use adw::glib::subclass::InitializingObject;
-use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::{ColumnView, CompositeTemplate, SearchEntry};
 
