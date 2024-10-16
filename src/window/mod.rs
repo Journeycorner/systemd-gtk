@@ -40,10 +40,10 @@ impl Window {
         let column_view = self.imp().collections_list.get();
         Self::setup_columns(&column_view);
 
-        let filter_value: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
+        let filter_input_value: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
 
         // Clone Rc for the filter closure
-        let filter_value_for_filter = Rc::clone(&filter_value);
+        let filter_input_lower_case = Rc::clone(&filter_input_value);
         let filter = CustomFilter::new(move |obj| {
             // Get `UnitObject` from `glib::Object`
             let unit_object = obj
@@ -51,12 +51,19 @@ impl Window {
                 .expect("The object needs to be of type `UnitObject`.");
 
             // Check if unit_object's unit_file contains the filter value
-            unit_object.unit_file().contains(&filter_value_for_filter.borrow().clone())
+            let input = &filter_input_lower_case.borrow().to_string();
+            if unit_object.unit_file().to_lowercase().contains(input) {
+                true
+            } else if let Some(desc) = unit_object.description() {
+                desc.to_lowercase().contains(input)
+            } else {
+                false
+            }
         });
         let filter_clone = filter.clone();
 
         // Now clone the Rc for the search_changed callback
-        self.build_search_filter(filter, Rc::clone(&filter_value));
+        self.build_search_filter(filter, Rc::clone(&filter_input_value));
 
         // Now create the FilterListModel using the filter
         let filter_model = FilterListModel::new(Some(model.clone()), Some(filter_clone));
@@ -145,7 +152,7 @@ impl Window {
 
         search_filter.connect_search_changed(move |input| {
             // Update the filter_value inside RefCell
-            *filter_value_for_search.borrow_mut() = input.text().to_string();
+            *filter_value_for_search.borrow_mut() = input.text().to_lowercase();
 
             // Notify that the filter has changed
             filter.changed(FilterChange::Different);
