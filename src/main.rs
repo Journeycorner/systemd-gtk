@@ -1,5 +1,6 @@
 mod window;
 mod systemd;
+mod table;
 
 use crate::window::Window;
 use gtk::prelude::*;
