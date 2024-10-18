@@ -1,7 +1,7 @@
 use adw::{glib, SplitButton};
 use adw::glib::subclass::InitializingObject;
 use adw::subclass::prelude::*;
-use gtk::{ColumnView, CompositeTemplate, SearchEntry};
+use gtk::{ActionBar, ColumnView, CompositeTemplate, SearchEntry};
 
 // Object holding the state
 #[derive(CompositeTemplate, Default)]
@@ -12,6 +12,9 @@ pub struct Window {
 
     #[template_child]
     pub search_filter: TemplateChild<SearchEntry>,
+
+    #[template_child]
+    pub bottom_bar: TemplateChild<ActionBar>,
 
     #[template_child]
     pub action_button: TemplateChild<SplitButton>,

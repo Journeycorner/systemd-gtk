@@ -6,8 +6,8 @@ use adw::glib::{clone, Object};
 use adw::prelude::{Cast, CastNone, ListItemExt};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib};
-use gtk::prelude::{EditableExt, FilterExt, SelectionModelExt};
-use gtk::{ColumnView, ColumnViewColumn, CustomFilter, CustomSorter, FilterChange, FilterListModel, Label, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
+use gtk::prelude::{EditableExt, FilterExt, SelectionModelExt, WidgetExt};
+use gtk::{Align, ColumnView, ColumnViewColumn, CustomFilter, CustomSorter, FilterChange, FilterListModel, Label, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -90,7 +90,9 @@ impl Window {
 
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {
         let action_button_clone = self.imp().action_button.clone();
+        let bottom_bar_clone = self.imp().bottom_bar.clone();
         single_selection.connect_selection_changed(move |selection, _, _| {
+            bottom_bar_clone.set_revealed(true);
             let unit_object = selection.selected_item()
                 .unwrap().downcast::<UnitObject>()
                 .unwrap();
@@ -126,25 +128,31 @@ impl Window {
 
     fn setup_columns(column_view: &ColumnView) {
         let name_factory = SignalListItemFactory::new();
-        Self::connect_name_factory(&name_factory, |unit_object| unit_object.unit_file().to_string());
+        Self::connect_name_factory(&name_factory, |unit_object| unit_object.unit_file().to_string(), 30);
         name_factory.connect_setup(Self::setup_factory());
 
         let load_factory = SignalListItemFactory::new();
         load_factory.connect_setup(Self::setup_factory());
-        Self::connect_name_factory(&load_factory, |unit_object| unit_object.load().unwrap_or_default().to_string());
+        Self::connect_name_factory(&load_factory, |unit_object| unit_object.load().unwrap_or_default().to_string(), 1_000);
 
         let active_factory = SignalListItemFactory::new();
         active_factory.connect_setup(Self::setup_factory());
-        Self::connect_name_factory(&active_factory, |unit_object| unit_object.active().unwrap_or_default().to_string());
+        Self::connect_name_factory(&active_factory, |unit_object| unit_object.active().unwrap_or_default().to_string(), 1_000);
 
         let description_factory = SignalListItemFactory::new();
         description_factory.connect_setup(Self::setup_factory());
-        Self::connect_name_factory(&description_factory, |unit_object| unit_object.description().unwrap_or_default().to_string());
+        Self::connect_name_factory(&description_factory, |unit_object| unit_object.description().unwrap_or_default().to_string(), 1_000);
 
-        column_view.append_column(&ColumnViewColumn::new(Some("UNIT"), Some(name_factory.upcast::<ListItemFactory>())));
-        column_view.append_column(&ColumnViewColumn::new(Some("LOAD"), Some(load_factory.upcast::<ListItemFactory>())));
-        column_view.append_column(&ColumnViewColumn::new(Some("ACTIVE"), Some(active_factory.upcast::<ListItemFactory>())));
-        column_view.append_column(&ColumnViewColumn::new(Some("DESCRIPTION"), Some(description_factory.upcast::<ListItemFactory>())));
+        column_view.append_column(&Self::with_expand("UNIT", name_factory));
+        column_view.append_column(&Self::with_expand("LOAD",load_factory));
+        column_view.append_column(&Self::with_expand("ACTIVE",active_factory));
+        column_view.append_column(&Self::with_expand("DESCRIPTION",description_factory));
+    }
+
+    fn with_expand(unit_name: &str, name_factory: SignalListItemFactory) -> ColumnViewColumn {
+        let column = ColumnViewColumn::new(Some(unit_name), Some(name_factory.upcast::<ListItemFactory>()));
+        column.set_expand(true);
+        column
     }
 
     fn build_search_filter(&self, filter: CustomFilter, filter_value_for_search: Rc<RefCell<String>>) {
@@ -169,7 +177,7 @@ impl Window {
         }
     }
 
-    fn connect_name_factory<F>(name_factory: &SignalListItemFactory, transform_fn: F)
+    fn connect_name_factory<F>(name_factory: &SignalListItemFactory, transform_fn: F, max_len: usize)
     where
         F: Fn(&UnitObject) -> String + 'static,
     {
@@ -189,19 +197,18 @@ impl Window {
                 .child()
                 .and_downcast::<Label>()
                 .expect("The child has to be a `Label`.");
-
+            label.set_halign(Align::Start);
             // Use the function passed as argument to get the label text
             let label_text = transform_fn(&unit_object);
-            let label_text_short = Self::shorten_string(label_text);
+            let label_text_short = Self::shorten_string(label_text, max_len);
             // Set the label text
             label.set_label(&label_text_short);
         });
     }
 
-    fn shorten_string(s: String) -> String {
-        const MAX_LEN: usize = 30;
-        if s.len() > MAX_LEN {
-            format!("{}...", &s[..MAX_LEN])
+    fn shorten_string(s: String, max_len: usize) -> String {
+        if s.len() > max_len {
+            format!("{}...", &s[..max_len])
         } else {
             s
         }

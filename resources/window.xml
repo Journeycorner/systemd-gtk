@@ -24,9 +24,13 @@
                     </object>
                 </property>
                 <child type="bottom">
-                    <object class="GtkActionBar">
+                    <object class="GtkActionBar" id="bottom_bar">
+                        <property name="revealed">false</property>
                         <child>
                             <object class="AdwSplitButton" id="action_button">
+                                <style>
+                                    <class name="destructive-action"/>
+                                </style>
                                 <property name="sensitive">true</property>
                                 <property name="halign">3</property>
                                 <property name="label">Stop</property>
