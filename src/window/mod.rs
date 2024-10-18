@@ -5,11 +5,12 @@ use crate::systemd::UnitObject;
 use adw::glib::{clone, Object};
 use adw::prelude::{Cast, CastNone, ListItemExt};
 use adw::subclass::prelude::ObjectSubclassIsExt;
-use adw::{gio, glib};
+use adw::{gio, glib, Toast};
 use gtk::prelude::{EditableExt, FilterExt, SelectionModelExt, WidgetExt};
 use gtk::{Align, ColumnView, ColumnViewColumn, CustomFilter, CustomSorter, FilterChange, FilterListModel, Label, ListItem, ListItemFactory, SignalListItemFactory, SingleSelection, SortListModel};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Instant;
 
 glib::wrapper! {
     pub struct Window(ObjectSubclass<imp::Window>)
@@ -27,13 +28,19 @@ impl Window {
     // ANCHOR: setup_collections
     fn setup_collections(&self) {
         // Create channel that can hold at most 1 message at a time
-        let (sender, receiver) = async_channel::bounded(1);
+        let (units_sender, units_receiver) = async_channel::bounded(1);
+        let (toast_text_sender, toast_text_receiver) = async_channel::bounded(1);
 
         gio::spawn_blocking(move || {
+            let start = Instant::now();
             let items = systemd::units();
-            sender.clone()
+            let items_len = items.len();
+            units_sender.clone()
                 .send_blocking(items)
                 .expect("The channel needs to be open.");
+            let duration = start.elapsed().as_millis();
+            let info_text = format!("Fetched {} units in {}ms", items_len, duration);
+            toast_text_sender.clone().send_blocking(info_text).expect("The channel needs to be open.");
         });
 
         let model = gio::ListStore::new::<UnitObject>();
@@ -81,11 +88,19 @@ impl Window {
             #[weak]
             model,
             async move {
-                while let Ok(items) = receiver.recv().await {
+                while let Ok(items) = units_receiver.recv().await {
                     model.extend_from_slice(&items);
                 }
             }
         ));
+        let overlay_clone = self.imp().overlay.clone();
+        glib::spawn_future_local(
+            async move {
+                while let Ok(toast_text) = toast_text_receiver.recv().await {
+                    overlay_clone.add_toast(Toast::new(&*toast_text));
+                }
+            }
+        );
     }
 
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {

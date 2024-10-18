@@ -1,4 +1,4 @@
-use adw::{glib, SplitButton};
+use adw::{glib, SplitButton, ToastOverlay};
 use adw::glib::subclass::InitializingObject;
 use adw::subclass::prelude::*;
 use gtk::{ActionBar, ColumnView, CompositeTemplate, SearchEntry};
@@ -7,6 +7,9 @@ use gtk::{ActionBar, ColumnView, CompositeTemplate, SearchEntry};
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/com/journeycorner/systemd-gtk/window.xml")]
 pub struct Window {
+    #[template_child]
+    pub overlay: TemplateChild<ToastOverlay>,
+
     #[template_child]
     pub collections_list: TemplateChild<ColumnView>,
 

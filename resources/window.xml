@@ -6,36 +6,40 @@
         <property name="default-height">600</property>
 
         <property name="content">
-            <object class="AdwToolbarView">
-                <child type="top">
-                    <object class="AdwHeaderBar">
-                        <child type="start">
-                            <object class="GtkSearchEntry" id="search_filter">
+            <object class="AdwToastOverlay" id="overlay">
+                <child>
+                    <object class="AdwToolbarView">
+                        <child type="top">
+                            <object class="AdwHeaderBar">
+                                <child type="start">
+                                    <object class="GtkSearchEntry" id="search_filter">
+                                    </object>
+                                </child>
                             </object>
                         </child>
-                    </object>
-                </child>
-                <property name="content">
-                    <object class="GtkScrolledWindow">
-                        <property name="child">
-                            <object class="GtkColumnView" id="collections_list">
+                        <property name="content">
+                            <object class="GtkScrolledWindow">
+                                <property name="child">
+                                    <object class="GtkColumnView" id="collections_list">
+                                    </object>
+                                </property>
                             </object>
                         </property>
-                    </object>
-                </property>
-                <child type="bottom">
-                    <object class="GtkActionBar" id="bottom_bar">
-                        <property name="revealed">false</property>
-                        <child>
-                            <object class="AdwSplitButton" id="action_button">
-                                <style>
-                                    <class name="destructive-action"/>
-                                </style>
-                                <property name="sensitive">true</property>
-                                <property name="halign">3</property>
-                                <property name="label">Stop</property>
-                                <property name="menu-model">button_run_menu</property>
-                                <property name="focusable">false</property>
+                        <child type="bottom">
+                            <object class="GtkActionBar" id="bottom_bar">
+                                <property name="revealed">false</property>
+                                <child>
+                                    <object class="AdwSplitButton" id="action_button">
+                                        <style>
+                                            <class name="destructive-action"/>
+                                        </style>
+                                        <property name="sensitive">true</property>
+                                        <property name="halign">3</property>
+                                        <property name="label">Stop</property>
+                                        <property name="menu-model">button_run_menu</property>
+                                        <property name="focusable">false</property>
+                                    </object>
+                                </child>
                             </object>
                         </child>
                     </object>
