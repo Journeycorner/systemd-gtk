@@ -1,6 +1,6 @@
-use adw::{glib, SplitButton, ToastOverlay};
 use adw::glib::subclass::InitializingObject;
 use adw::subclass::prelude::*;
+use adw::{glib, SplitButton, ToastOverlay};
 use gtk::{ActionBar, ColumnView, CompositeTemplate, SearchEntry};
 
 // Object holding the state
@@ -49,6 +49,7 @@ impl ObjectImpl for Window {
         // Setup
         let obj = self.obj();
         obj.setup_collections();
+        obj.setup_actions();
     }
 }
 
@@ -64,4 +65,3 @@ impl ApplicationWindowImpl for Window {}
 // Trait shared by all adwaita application windows
 impl AdwApplicationWindowImpl for Window {}
 // ANCHOR_END: adw_application_window_impl
-

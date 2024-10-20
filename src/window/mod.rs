@@ -2,12 +2,15 @@ mod imp;
 
 use crate::systemd::UnitObject;
 use crate::{systemd, table};
+use adw::gio::ActionEntry;
 use adw::glib::{clone, Object};
-use adw::prelude::{Cast, CastNone, ListItemExt};
+use adw::prelude::{ActionMapExtManual, Cast};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib, Toast};
 use gtk::prelude::{EditableExt, FilterExt, SelectionModelExt, WidgetExt};
-use gtk::{CustomFilter, CustomSorter, FilterChange, FilterListModel, SingleSelection, SortListModel};
+use gtk::{
+    CustomFilter, CustomSorter, FilterChange, FilterListModel, SingleSelection, SortListModel,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
@@ -35,12 +38,16 @@ impl Window {
             let start = Instant::now();
             let items = systemd::units();
             let items_len = items.len();
-            units_sender.clone()
+            units_sender
+                .clone()
                 .send_blocking(items)
                 .expect("The channel needs to be open.");
             let duration = start.elapsed().as_millis();
             let info_text = format!("Fetched {} units in {}ms", items_len, duration);
-            toast_text_sender.clone().send_blocking(info_text).expect("The channel needs to be open.");
+            toast_text_sender
+                .clone()
+                .send_blocking(info_text)
+                .expect("The channel needs to be open.");
         });
 
         let model = gio::ListStore::new::<UnitObject>();
@@ -75,6 +82,8 @@ impl Window {
         // TODO trigger sorter on column selection
         let sort_model = SortListModel::new(Some(filter_model), None::<CustomSorter>);
         let single_selection = SingleSelection::new(Some(sort_model));
+        single_selection.set_autoselect(false);
+
         self.connect_selection_changed(&single_selection);
 
         let column_view = self.imp().collections_list.get();
@@ -92,13 +101,11 @@ impl Window {
             }
         ));
         let overlay_clone = self.imp().overlay.clone();
-        glib::spawn_future_local(
-            async move {
-                while let Ok(toast_text) = toast_text_receiver.recv().await {
-                    overlay_clone.add_toast(Toast::new(&*toast_text));
-                }
+        glib::spawn_future_local(async move {
+            while let Ok(toast_text) = toast_text_receiver.recv().await {
+                overlay_clone.add_toast(Toast::new(&*toast_text));
             }
-        );
+        });
     }
 
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {
@@ -106,8 +113,10 @@ impl Window {
         let bottom_bar_clone = self.imp().bottom_bar.clone();
         single_selection.connect_selection_changed(move |selection, _, _| {
             bottom_bar_clone.set_revealed(true);
-            let unit_object = selection.selected_item()
-                .unwrap().downcast::<UnitObject>()
+            let unit_object = selection
+                .selected_item()
+                .unwrap()
+                .downcast::<UnitObject>()
                 .unwrap();
             let active = unit_object.active().unwrap().eq("active");
             if active {
@@ -139,7 +148,11 @@ impl Window {
         })
     }
 
-    fn build_search_filter(&self, filter: CustomFilter, filter_value_for_search: Rc<RefCell<String>>) {
+    fn build_search_filter(
+        &self,
+        filter: CustomFilter,
+        filter_value_for_search: Rc<RefCell<String>>,
+    ) {
         let search_filter = self.imp().search_filter.get();
 
         search_filter.connect_search_changed(move |input| {
@@ -151,5 +164,12 @@ impl Window {
         });
     }
 
-
+    fn setup_actions(&self) {
+        let search_filter = ActionEntry::builder("search_filter")
+            .activate(|window: &Self, _, _| {
+                window.imp().search_filter.grab_focus();
+            })
+            .build();
+        self.add_action_entries([search_filter]);
+    }
 }

@@ -1,8 +1,9 @@
-mod window;
 mod systemd;
 mod table;
+mod window;
 
 use crate::window::Window;
+use adw::Application;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 
@@ -14,16 +15,22 @@ fn main() -> glib::ExitCode {
         .expect("Failed to register resources.");
 
     // Build application
-    let app = adw::Application::builder()
-        .application_id(APP_ID)
-        .build();
+    let app = adw::Application::builder().application_id(APP_ID).build();
+
+    // Connect to signals
     app.connect_activate(build_ui);
+    setup_shortcuts(&app);
+
     // Run application
     app.run()
 }
-
 fn build_ui(app: &adw::Application) {
     // Create new window and present it
     let window = Window::new(app);
     window.present();
+}
+
+fn setup_shortcuts(app: &Application) {
+    app.set_accels_for_action("win.search_filter", &["<Ctrl>f"]);
+    app.set_accels_for_action("win.show-help-overlay", &["<Ctrl>h"]);
 }

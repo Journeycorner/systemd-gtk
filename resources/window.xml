@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
+    <menu id="main-menu">
+        <item>
+            <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
+            <attribute name="action">win.show-help-overlay</attribute>
+        </item>
+    </menu>
+
     <template class="MyGtkAppWindow" parent="AdwApplicationWindow">
         <property name="title">systemd GTK</property>
-        <property name="default-width">800</property>
-        <property name="default-height">600</property>
+        <property name="default-width">1920</property>
+        <property name="default-height">1080</property>
 
         <property name="content">
             <object class="AdwToastOverlay" id="overlay">
@@ -12,7 +19,13 @@
                         <child type="top">
                             <object class="AdwHeaderBar">
                                 <child type="start">
-                                    <object class="GtkSearchEntry" id="search_filter">
+                                    <object class="GtkSearchEntry" id="search_filter"/>
+                                </child>
+                                <child type="end">
+                                    <object class="GtkMenuButton">
+                                        <property name="icon-name">open-menu-symbolic</property>
+                                        <property name="menu-model">main-menu</property>
+                                        <property name="tooltip-text" translatable="yes">Main Menu</property>
                                     </object>
                                 </child>
                             </object>
