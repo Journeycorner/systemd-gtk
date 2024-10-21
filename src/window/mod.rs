@@ -2,16 +2,16 @@ mod imp;
 
 use crate::systemd::UnitObject;
 use crate::{systemd, table};
-use adw::gio::ActionEntry;
+use adw::gio::{ActionEntry, ListStore};
 use adw::glib::{clone, Object};
 use adw::prelude::{ActionMapExtManual, Cast};
 use adw::subclass::prelude::ObjectSubclassIsExt;
-use adw::{gio, glib, Toast};
+use adw::{gio, glib, Toast, ToastOverlay};
+use async_channel::{Receiver, Sender};
 use gtk::prelude::{EditableExt, FilterExt, SelectionModelExt, WidgetExt};
-use gtk::{
-    CustomFilter, CustomSorter, FilterChange, FilterListModel, SingleSelection, SortListModel,
-};
+use gtk::{CustomFilter, FilterChange, FilterListModel, SingleSelection, SortListModel};
 use std::cell::RefCell;
+use std::future::Future;
 use std::rc::Rc;
 use std::time::Instant;
 
@@ -34,64 +34,49 @@ impl Window {
         let (units_sender, units_receiver) = async_channel::bounded(1);
         let (toast_text_sender, toast_text_receiver) = async_channel::bounded(1);
 
-        gio::spawn_blocking(move || {
-            let start = Instant::now();
-            let items = systemd::units();
-            let items_len = items.len();
-            units_sender
-                .clone()
-                .send_blocking(items)
-                .expect("The channel needs to be open.");
-            let duration = start.elapsed().as_millis();
-            let info_text = format!("Fetched {} units in {}ms", items_len, duration);
-            toast_text_sender
-                .clone()
-                .send_blocking(info_text)
-                .expect("The channel needs to be open.");
-        });
+        gio::spawn_blocking(move || Self::load_units(units_sender, toast_text_sender));
 
         let model = gio::ListStore::new::<UnitObject>();
         let filter_input_value: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
 
         // Clone Rc for the filter closure
         let filter_input_lower_case = Rc::clone(&filter_input_value);
-        let filter = CustomFilter::new(move |obj| {
-            // Get `UnitObject` from `glib::Object`
-            let unit_object = obj
-                .downcast_ref::<UnitObject>()
-                .expect("The object needs to be of type `UnitObject`.");
-
-            // Check if unit_object's unit_file contains the filter value
-            let input = &filter_input_lower_case.borrow().to_string();
-            if unit_object.unit_file().to_lowercase().contains(input) {
-                true
-            } else if let Some(desc) = unit_object.description() {
-                desc.to_lowercase().contains(input)
-            } else {
-                false
-            }
-        });
-        let filter_clone = filter.clone();
+        let filter =
+            CustomFilter::new(move |obj| Self::search_filter(&filter_input_lower_case, obj));
 
         // Now clone the Rc for the search_changed callback
-        self.build_search_filter(filter, Rc::clone(&filter_input_value));
+        self.build_search_filter(filter.clone(), Rc::clone(&filter_input_value));
 
         // Now create the FilterListModel using the filter
-        let filter_model = FilterListModel::new(Some(model.clone()), Some(filter_clone));
-
-        // TODO trigger sorter on column selection
-        let sort_model = SortListModel::new(Some(filter_model), None::<CustomSorter>);
-        let single_selection = SingleSelection::new(Some(sort_model));
-        single_selection.set_autoselect(false);
-
-        self.connect_selection_changed(&single_selection);
+        let filter_model = FilterListModel::new(Some(model.clone()), Some(filter.clone()));
 
         let column_view = self.imp().collections_list.get();
+        let sort_model = SortListModel::new(Some(filter_model), column_view.sorter());
+
+        let single_selection = SingleSelection::new(Some(sort_model));
+        single_selection.set_autoselect(false);
+        self.connect_selection_changed(&single_selection);
+
         column_view.set_model(Some(&single_selection));
         table::setup_columns(&column_view);
 
         // The main loop executes the asynchronous block
-        glib::spawn_future_local(clone!(
+        glib::spawn_future_local(Self::await_units_data(units_receiver, model));
+        let overlay_clone = self.imp().overlay.clone();
+        glib::spawn_future_local(Self::await_units_toast(toast_text_receiver, overlay_clone));
+    }
+
+    async fn await_units_toast(toast_text_receiver: Receiver<String>, overlay_clone: ToastOverlay) {
+        while let Ok(toast_text) = toast_text_receiver.recv().await {
+            overlay_clone.add_toast(Toast::new(&*toast_text));
+        }
+    }
+
+    fn await_units_data(
+        units_receiver: Receiver<Vec<UnitObject>>,
+        model: ListStore,
+    ) -> impl Future<Output = ()> + Sized {
+        clone!(
             #[weak]
             model,
             async move {
@@ -99,13 +84,40 @@ impl Window {
                     model.extend_from_slice(&items);
                 }
             }
-        ));
-        let overlay_clone = self.imp().overlay.clone();
-        glib::spawn_future_local(async move {
-            while let Ok(toast_text) = toast_text_receiver.recv().await {
-                overlay_clone.add_toast(Toast::new(&*toast_text));
-            }
-        });
+        )
+    }
+
+    fn search_filter(filter_input_lower_case: &Rc<RefCell<String>>, obj: &Object) -> bool {
+        // Get `UnitObject` from `glib::Object`
+        let unit_object = obj
+            .downcast_ref::<UnitObject>()
+            .expect("The object needs to be of type `UnitObject`.");
+
+        // Check if unit_object's unit_file contains the filter value
+        let input = &filter_input_lower_case.borrow().to_string();
+        if unit_object.unit_file().to_lowercase().contains(input) {
+            true
+        } else if let Some(desc) = unit_object.description() {
+            desc.to_lowercase().contains(input)
+        } else {
+            false
+        }
+    }
+
+    fn load_units(units_sender: Sender<Vec<UnitObject>>, toast_text_sender: Sender<String>) {
+        let start = Instant::now();
+        let items = systemd::units();
+        let items_len = items.len();
+        units_sender
+            .clone()
+            .send_blocking(items)
+            .expect("The channel needs to be open.");
+        let duration = start.elapsed().as_millis();
+        let info_text = format!("Fetched {} units in {}ms", items_len, duration);
+        toast_text_sender
+            .clone()
+            .send_blocking(info_text)
+            .expect("The channel needs to be open.");
     }
 
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {
@@ -127,25 +139,6 @@ impl Window {
                 action_button_clone.connect_clicked(move |_| systemd::start(unit_object.clone()));
             }
         });
-    }
-
-    fn build_sorter() -> CustomSorter {
-        CustomSorter::new(move |obj1, obj2| {
-            // Get `UnitObject` from `glib::Object`
-            let unit_object_1 = obj1
-                .downcast_ref::<UnitObject>()
-                .expect("The object needs to be of type `UnitObject`.");
-            let unit_object_2 = obj2
-                .downcast_ref::<UnitObject>()
-                .expect("The object needs to be of type `UnitObject`.");
-
-            // Get property "number" from `UnitObject`
-            let unit_file_1 = unit_object_1.unit_file();
-            let unit_file_2 = unit_object_2.unit_file();
-
-            // Reverse sorting order -> large numbers come first
-            unit_file_1.cmp(&unit_file_2).into()
-        })
     }
 
     fn build_search_filter(
