@@ -7,7 +7,7 @@
         </item>
     </menu>
 
-    <template class="MyGtkAppWindow" parent="AdwApplicationWindow">
+    <template class="MainWindow" parent="AdwApplicationWindow">
         <property name="title">systemd GTK</property>
         <property name="default-width">1920</property>
         <property name="default-height">1080</property>
@@ -33,7 +33,7 @@
                         <property name="content">
                             <object class="GtkScrolledWindow">
                                 <property name="child">
-                                    <object class="GtkColumnView" id="collections_list">
+                                    <object class="GtkColumnView" id="column_view">
                                     </object>
                                 </property>
                             </object>

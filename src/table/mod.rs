@@ -56,11 +56,9 @@ pub(crate) fn setup_columns(column_view: &ColumnView) {
             .downcast_ref::<UnitObject>()
             .expect("The object needs to be of type `UnitObject`.");
 
-        // Get property "number" from `UnitObject`
         let unit_file_1 = unit_object_1.unit_file();
         let unit_file_2 = unit_object_2.unit_file();
 
-        // Reverse sorting order -> large numbers come first
         unit_file_1.cmp(&unit_file_2).into()
     });
     column_view.append_column(unit_column);
@@ -72,11 +70,9 @@ pub(crate) fn setup_columns(column_view: &ColumnView) {
             .downcast_ref::<UnitObject>()
             .expect("The object needs to be of type `UnitObject`.");
 
-        // Get property "number" from `UnitObject`
         let unit_file_1 = unit_object_1.load();
         let unit_file_2 = unit_object_2.load();
 
-        // Reverse sorting order -> large numbers come first
         unit_file_1.cmp(&unit_file_2).into()
     });
     column_view.append_column(load_column);

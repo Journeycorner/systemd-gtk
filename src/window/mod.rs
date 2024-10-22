@@ -28,8 +28,7 @@ impl Window {
         Object::builder().property("application", app).build()
     }
 
-    // ANCHOR: setup_collections
-    fn setup_collections(&self) {
+    fn setup_column_view(&self) {
         // Create channel that can hold at most 1 message at a time
         let (units_sender, units_receiver) = async_channel::bounded(1);
         let (toast_text_sender, toast_text_receiver) = async_channel::bounded(1);
@@ -50,7 +49,7 @@ impl Window {
         // Now create the FilterListModel using the filter
         let filter_model = FilterListModel::new(Some(model.clone()), Some(filter.clone()));
 
-        let column_view = self.imp().collections_list.get();
+        let column_view = self.imp().column_view.get();
         let sort_model = SortListModel::new(Some(filter_model), column_view.sorter());
 
         let single_selection = SingleSelection::new(Some(sort_model));

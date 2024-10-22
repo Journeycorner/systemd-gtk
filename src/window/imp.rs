@@ -11,7 +11,7 @@ pub struct Window {
     pub overlay: TemplateChild<ToastOverlay>,
 
     #[template_child]
-    pub collections_list: TemplateChild<ColumnView>,
+    pub column_view: TemplateChild<ColumnView>,
 
     #[template_child]
     pub search_filter: TemplateChild<SearchEntry>,
@@ -27,7 +27,7 @@ pub struct Window {
 #[glib::object_subclass]
 impl ObjectSubclass for Window {
     // `NAME` needs to match `class` attribute of template
-    const NAME: &'static str = "MyGtkAppWindow";
+    const NAME: &'static str = "MainWindow";
     type Type = super::Window;
     type ParentType = adw::ApplicationWindow;
 
@@ -48,7 +48,7 @@ impl ObjectImpl for Window {
 
         // Setup
         let obj = self.obj();
-        obj.setup_collections();
+        obj.setup_column_view();
         obj.setup_actions();
     }
 }
@@ -61,7 +61,5 @@ impl WindowImpl for Window {}
 // Trait shared by all application windows
 impl ApplicationWindowImpl for Window {}
 
-// ANCHOR: adw_application_window_impl
 // Trait shared by all adwaita application windows
 impl AdwApplicationWindowImpl for Window {}
-// ANCHOR_END: adw_application_window_impl

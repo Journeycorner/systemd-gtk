@@ -2,14 +2,14 @@ mod imp;
 
 use adw::glib;
 use adw::glib::Object;
-use systemctl::State;
+use systemctl::{State, Unit};
 
 glib::wrapper! {
     pub struct UnitObject(ObjectSubclass<imp::UnitObject>);
 }
 
 impl UnitObject {
-    pub fn new(unit: Result<systemctl::Unit, std::io::Error>) -> Option<Self> {
+    pub fn new(unit: Result<Unit, std::io::Error>) -> Option<Self> {
         if let Ok(u) = unit {
             Some(
                 Object::builder()
@@ -33,12 +33,12 @@ impl UnitObject {
 }
 
 pub fn units() -> Vec<UnitObject> {
+    println!("cargo:rerun-if-env-changed=UNIT_OBJECTS");
     let systemctl = systemctl::SystemCtl::default();
     systemctl
         .list_units_full(Some("service"), None, None)
         .unwrap()
         .iter()
-        .take(10)
         .map(|unit| systemctl.create_unit(unit.unit_file.as_str()))
         .map(UnitObject::new)
         .filter(|u| u.is_some())
