@@ -3,9 +3,8 @@ mod table;
 mod window;
 
 use crate::window::Window;
-use adw::Application;
-use gtk::prelude::*;
-use gtk::{gio, glib};
+use adw::{gio, glib, Application};
+use adw::prelude::*;
 
 const APP_ID: &str = "com.journeycorner.systemd-gtk";
 
@@ -15,7 +14,7 @@ fn main() -> glib::ExitCode {
         .expect("Failed to register resources.");
 
     // Build application
-    let app = adw::Application::builder().application_id(APP_ID).build();
+    let app = Application::builder().application_id(APP_ID).build();
 
     // Connect to signals
     app.connect_activate(build_ui);

@@ -1,7 +1,6 @@
 use adw::glib;
 use adw::glib::Properties;
-use adw::glib::Type;
-use adw::prelude::{ObjectExt, StaticType};
+use adw::prelude::ObjectExt;
 use adw::subclass::prelude::*;
 use std::sync::Mutex;
 
@@ -10,33 +9,28 @@ use std::sync::Mutex;
 #[properties(wrapper_type = super::UnitObject)]
 pub struct UnitObject {
     #[property(get, set)]
-    unit_file: Mutex<String>,
+    unit_name: Mutex<String>,
 
     #[property(get, set)]
-    load: Mutex<Option<String>>,
+    load: Mutex<String>,
 
     #[property(get, set)]
-    active: Mutex<Option<String>>,
+    state: Mutex<String>,
 
     #[property(get, set)]
-    description: Mutex<Option<String>>,
+    sub_state: Mutex<String>,
+
+    #[property(get, set)]
+    description: Mutex<String>,
 }
 
 // The central trait for subclassing a GObject
 #[glib::object_subclass]
 impl ObjectSubclass for UnitObject {
-    const NAME: &'static str = "MyGtkAppUnitObject";
+    const NAME: &'static str = "UnitObject";
     type Type = super::UnitObject;
 }
 
 // Trait shared by all GObjects
 #[glib::derived_properties]
 impl ObjectImpl for UnitObject {}
-
-impl StaticType for UnitObject {
-    #[allow(unconditional_recursion)]
-    fn static_type() -> Type {
-        // This ensures UnitObject is properly registered with the GObject type system
-        Self::static_type()
-    }
-}

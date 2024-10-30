@@ -782,8 +782,6 @@ dependencies = [
 [[package]]
 name = "systemctl"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c590fbac38f010500341b64c0214bdcd0d4a35be1a9d9b477e854c9353fe111"
 dependencies = [
  "bon",
  "itertools",
@@ -799,6 +797,8 @@ dependencies = [
  "glib-build-tools",
  "gtk4",
  "libadwaita",
+ "strum",
+ "strum_macros",
  "systemctl",
 ]
 

@@ -1,115 +1,45 @@
-use crate::systemd::UnitObject;
-use adw::glib::Object;
-use adw::prelude::{Cast, CastNone};
-use gtk::prelude::{ListItemExt, WidgetExt};
-use gtk::{
-    Align, ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, ListItemFactory, Ordering,
-    SignalListItemFactory, SortType,
-};
+use crate::systemd::unit::UnitObject;
+use adw::prelude::{Cast, CastNone, ListItemExt, WidgetExt};
+use gtk::glib::Object;
+use gtk::{Align, ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, ListItemFactory, Ordering, SignalListItemFactory, SortType};
 
-pub(crate) fn setup_columns(column_view: &ColumnView) {
-    let name_factory = SignalListItemFactory::new();
-    name_factory.connect_setup(move |_, list_item| setup_factory(list_item));
-    name_factory.connect_bind(move |_, list_item| {
-        build_label(
-            list_item,
-            |unit_object| unit_object.unit_file().to_string(),
-            30,
-        )
-    });
+/// Sets up the columns for the given `ColumnView` widget.
+///
+/// This function takes a `ColumnView` widget and adds multiple columns to it, each representing a different property of a `UnitObject`.
+/// The columns include "UNIT", "LOAD", "ACTIVE", "SUB", and "DESCRIPTION". Each column is associated with a getter function that
+/// extracts the appropriate property from a `UnitObject`. The "UNIT" column is sorted in ascending order by default.
+///
+/// # Arguments
+/// * `column_view` - A reference to a `ColumnView` widget to which columns will be added.
+///
+/// # GTK-RS
+/// This function uses GTK-RS to create columns for a `ColumnView` widget. It utilizes `SignalListItemFactory` to create list item factories,
+/// `CustomSorter` to define custom sorting for columns, and `ColumnViewColumn` to represent individual columns in the `ColumnView`.
+pub fn setup_columns(column_view: &ColumnView) {
+    let properties: &[(&str, fn(&UnitObject) -> String, Option<fn(&str) -> (&str, &str)>)] = &[
+        ("UNIT", UnitObject::unit_name, Some(split_name_and_suffix)),
+        ("LOAD", UnitObject::load, None),
+        ("ACTIVE", UnitObject::state, None),
+        ("SUB", UnitObject::sub_state, None),
+        ("DESCRIPTION", UnitObject::description, None),
+    ];
 
-    let load_factory = SignalListItemFactory::new();
-    load_factory.connect_setup(move |_, list_item| setup_factory(list_item));
-    load_factory.connect_bind(move |_, list_item| {
-        build_label(
-            list_item,
-            |unit_object| unit_object.load().unwrap_or_default().to_string(),
-            1_000,
-        )
-    });
+    for (title, getter, split_func) in properties {
+        let factory = create_factory(*getter);
+        let column = with_expand(title, factory, *getter, *split_func);
+        column_view.append_column(&column);
+        // sort by unit column by default
+        if "UNIT".eq(*title) {
+            column_view.sort_by_column(Some(&column), SortType::Ascending);
+        }
+    }
+}
 
-    let active_factory = SignalListItemFactory::new();
-    active_factory.connect_setup(move |_, list_item| setup_factory(list_item));
-    active_factory.connect_bind(move |_, list_item| {
-        build_label(
-            list_item,
-            |unit_object| unit_object.active().unwrap_or_default().to_string(),
-            1_000,
-        )
-    });
-
-    let description_factory = SignalListItemFactory::new();
-    description_factory.connect_setup(move |_, list_item| setup_factory(list_item));
-    description_factory.connect_bind(move |_, list_item| {
-        build_label(
-            list_item,
-            |unit_object| unit_object.description().unwrap_or_default().to_string(),
-            1_000,
-        )
-    });
-
-    let unit_column = &with_expand("UNIT", name_factory, |one, two| {
-        let unit_object_1 = one
-            .downcast_ref::<UnitObject>()
-            .expect("The object needs to be of type `UnitObject`.");
-        let unit_object_2 = two
-            .downcast_ref::<UnitObject>()
-            .expect("The object needs to be of type `UnitObject`.");
-
-        let unit_file_1 = unit_object_1.unit_file();
-        let unit_file_2 = unit_object_2.unit_file();
-
-        unit_file_1.cmp(&unit_file_2).into()
-    });
-    column_view.append_column(unit_column);
-    let load_column = &with_expand("LOAD", load_factory, |one, two| {
-        let unit_object_1 = one
-            .downcast_ref::<UnitObject>()
-            .expect("The object needs to be of type `UnitObject`.");
-        let unit_object_2 = two
-            .downcast_ref::<UnitObject>()
-            .expect("The object needs to be of type `UnitObject`.");
-
-        let unit_file_1 = unit_object_1.load();
-        let unit_file_2 = unit_object_2.load();
-
-        unit_file_1.cmp(&unit_file_2).into()
-    });
-    column_view.append_column(load_column);
-    let active_column = &with_expand("ACTIVE", active_factory, |one, two| {
-        let unit_object_1 = one
-            .downcast_ref::<UnitObject>()
-            .expect("The object needs to be of type `UnitObject`.");
-        let unit_object_2 = two
-            .downcast_ref::<UnitObject>()
-            .expect("The object needs to be of type `UnitObject`.");
-
-        // Get property "number" from `UnitObject`
-        let unit_file_1 = unit_object_1.active();
-        let unit_file_2 = unit_object_2.active();
-
-        // Reverse sorting order -> large numbers come first
-        unit_file_1.cmp(&unit_file_2).into()
-    });
-    column_view.append_column(active_column);
-    let description_column = &with_expand("DESCRIPTION", description_factory, |one, two| {
-        let unit_object_1 = one
-            .downcast_ref::<UnitObject>()
-            .expect("The object needs to be of type `UnitObject`.");
-        let unit_object_2 = two
-            .downcast_ref::<UnitObject>()
-            .expect("The object needs to be of type `UnitObject`.");
-
-        // Get property "number" from `UnitObject`
-        let unit_file_1 = unit_object_1.description();
-        let unit_file_2 = unit_object_2.description();
-
-        // Reverse sorting order -> large numbers come first
-        unit_file_1.cmp(&unit_file_2).into()
-    });
-    column_view.append_column(description_column);
-
-    column_view.sort_by_column(Some(unit_column), SortType::Ascending);
+fn create_factory(getter: fn(&UnitObject) -> String) -> SignalListItemFactory {
+    let factory = SignalListItemFactory::new();
+    factory.connect_setup(|_, list_item| setup_factory(list_item));
+    factory.connect_bind(move |_, list_item| build_label(list_item, getter, 1_000));
+    factory
 }
 
 fn setup_factory(list_item: &Object) {
@@ -120,11 +50,7 @@ fn setup_factory(list_item: &Object) {
         .set_child(Some(&label));
 }
 
-fn build_label<F>(list_item: &Object, transform_fn: F, max_len: usize)
-where
-    F: Fn(&UnitObject) -> String + 'static,
-{
-    // Get `UnitObject` from `ListItem`
+fn build_label(list_item: &Object, transform_fn: fn(&UnitObject) -> String, max_len: usize) {
     let unit_object = list_item
         .downcast_ref::<ListItem>()
         .expect("Needs to be ListItem")
@@ -132,7 +58,6 @@ where
         .and_downcast::<UnitObject>()
         .expect("The item has to be an `UnitObject`.");
 
-    // Get `Label` from `ListItem`
     let label = list_item
         .downcast_ref::<ListItem>()
         .expect("Needs to be ListItem")
@@ -140,26 +65,48 @@ where
         .and_downcast::<Label>()
         .expect("The child has to be a `Label`.");
     label.set_halign(Align::Start);
-    // Use the function passed as argument to get the label text
+
     let label_text = transform_fn(&unit_object);
-    let label_text_short = shorten_string(label_text, max_len);
-    // Set the label text
-    label.set_label(&label_text_short);
+    label.set_label(&shorten_string(label_text, max_len));
 }
 
 fn with_expand(
     unit_name: &str,
-    name_factory: SignalListItemFactory,
-    sort_func: fn(&Object, &Object) -> Ordering,
+    factory: SignalListItemFactory,
+    getter: fn(&UnitObject) -> String,
+    split_func: Option<fn(&str) -> (&str, &str)>,
 ) -> ColumnViewColumn {
-    let column = ColumnViewColumn::new(
-        Some(unit_name),
-        Some(name_factory.upcast::<ListItemFactory>()),
-    );
+    let column = ColumnViewColumn::new(Some(unit_name), Some(factory.upcast::<ListItemFactory>()));
     column.set_expand(true);
-    let sorter = CustomSorter::new(sort_func);
+    let sorter = CustomSorter::new(move |one, two| {
+        let unit_object_1 = one
+            .downcast_ref::<UnitObject>()
+            .expect("The object needs to be of type `UnitObject`.");
+        let unit_object_2 = two
+            .downcast_ref::<UnitObject>()
+            .expect("The object needs to be of type `UnitObject`.");
+
+        let value_1 = getter(unit_object_1);
+        let value_2 = getter(unit_object_2);
+
+        if let Some(split) = split_func {
+            // special case: sort by type first and by name second
+            let (name_a, suffix_a) = split(&value_1);
+            let (name_b, suffix_b) = split(&value_2);
+            return match suffix_a.cmp(&suffix_b) {
+                std::cmp::Ordering::Equal => string_compare_sort((&name_a).parse().unwrap(), name_b.parse().unwrap()),
+                other => other.into(),
+            };
+        } else {
+            string_compare_sort(value_1, value_2)
+        }
+    });
     column.set_sorter(Some(&sorter));
     column
+}
+
+fn string_compare_sort(value_1: String, value_2: String) -> Ordering {
+    value_1.to_lowercase().cmp(&value_2.to_lowercase()).into()
 }
 
 fn shorten_string(s: String, max_len: usize) -> String {
@@ -167,5 +114,14 @@ fn shorten_string(s: String, max_len: usize) -> String {
         format!("{}...", &s[..max_len])
     } else {
         s
+    }
+}
+
+/// Split unit name and suffix in order to enable two layer sorting
+fn split_name_and_suffix(s: &str) -> (&str, &str) {
+    if let Some(idx) = s.rfind('.') {
+        (&s[..idx], &s[idx..])
+    } else {
+        (s, "")
     }
 }

@@ -62,13 +62,13 @@
         <menu id="button_run_menu">
             <section>
                 <item>
-                    <attribute name="label">Run</attribute>
+                    <attribute name="label">Restart</attribute>
                 </item>
                 <item>
-                    <attribute name="label">Run With Leak Detector</attribute>
+                    <attribute name="label">Enable</attribute>
                 </item>
                 <item>
-                    <attribute name="label">Run With Debugger</attribute>
+                    <attribute name="label">Disable</attribute>
                 </item>
             </section>
         </menu>

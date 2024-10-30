@@ -1,6 +1,6 @@
 mod imp;
 
-use crate::systemd::UnitObject;
+use crate::systemd::{SystemCtrlAction, unit::UnitObject};
 use crate::{systemd, table};
 use adw::gio::{ActionEntry, ListStore};
 use adw::glib::{clone, Object};
@@ -35,7 +35,7 @@ impl Window {
 
         gio::spawn_blocking(move || Self::load_units(units_sender, toast_text_sender));
 
-        let model = gio::ListStore::new::<UnitObject>();
+        let model = ListStore::new::<UnitObject>();
         let filter_input_value: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
 
         // Clone Rc for the filter closure
@@ -74,7 +74,7 @@ impl Window {
     fn await_units_data(
         units_receiver: Receiver<Vec<UnitObject>>,
         model: ListStore,
-    ) -> impl Future<Output = ()> + Sized {
+    ) -> impl Future<Output=()> + Sized {
         clone!(
             #[weak]
             model,
@@ -92,14 +92,12 @@ impl Window {
             .downcast_ref::<UnitObject>()
             .expect("The object needs to be of type `UnitObject`.");
 
-        // Check if unit_object's unit_file contains the filter value
+        // Check if unit_object's unit_name contains the filter value
         let input = &filter_input_lower_case.borrow().to_string();
-        if unit_object.unit_file().to_lowercase().contains(input) {
+        if unit_object.unit_name().to_lowercase().contains(input) {
             true
-        } else if let Some(desc) = unit_object.description() {
-            desc.to_lowercase().contains(input)
         } else {
-            false
+            unit_object.description().to_lowercase().contains(input)
         }
     }
 
@@ -129,7 +127,8 @@ impl Window {
                 .unwrap()
                 .downcast::<UnitObject>()
                 .unwrap();
-            let active = unit_object.active().unwrap().eq("active");
+            println!("Available actions: {:?}", SystemCtrlAction::available_actions(&unit_object));
+            let active = unit_object.state().eq("active");
             if active {
                 action_button_clone.set_label("Stop");
                 action_button_clone.connect_clicked(move |_| systemd::stop(unit_object.clone()));
