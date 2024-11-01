@@ -782,6 +782,7 @@ dependencies = [
 [[package]]
 name = "systemctl"
 version = "0.4.0"
+source = "git+https://github.com/Journeycorner/systemctl?branch=main#1c537c50638547065126e633bfd368cc0be21a5b"
 dependencies = [
  "bon",
  "itertools",
