@@ -1,7 +1,7 @@
 use adw::glib::subclass::InitializingObject;
 use adw::subclass::prelude::*;
-use adw::{glib, SplitButton, ToastOverlay};
-use gtk::{ActionBar, ColumnView, CompositeTemplate, SearchEntry};
+use adw::{glib, Dialog, SplitButton, ToastOverlay};
+use gtk::{ActionBar, Button, ColumnView, CompositeTemplate, SearchEntry, TextView};
 
 // Object holding the state
 #[derive(CompositeTemplate, Default)]
@@ -21,6 +21,18 @@ pub struct Window {
 
     #[template_child]
     pub action_button: TemplateChild<SplitButton>,
+
+    #[template_child]
+    pub dialog: TemplateChild<Dialog>,
+
+    #[template_child]
+    pub edit_button: TemplateChild<Button>,
+
+    #[template_child]
+    pub text_view: TemplateChild<TextView>,
+
+    #[template_child]
+    pub save_file_button: TemplateChild<Button>,
 }
 
 // The central trait for subclassing a GObject

@@ -53,12 +53,52 @@
                                         <property name="focusable">false</property>
                                     </object>
                                 </child>
+                                <child>
+                                    <object class="GtkButton" id="edit_button">
+                                        <property name="label">Edit unit file</property>
+                                    </object>>
+                                </child>
                             </object>
                         </child>
                     </object>
                 </child>
             </object>
         </property>
+        <object class="AdwDialog" id="dialog">
+            <property name="follows_content_size">true</property>
+            <property name="presentation_mode">"ADW_DIALOG_BOTTOM_SHEET"</property>
+            <child>
+                <object class="AdwToolbarView">
+                    <property name="width_request">800</property>
+                    <property name="height_request">600</property>
+                    <child type="top">
+                        <object class="AdwHeaderBar"/>
+                    </child>
+                    <property name="content">
+                        <object class="GtkScrolledWindow">
+                            <property name="child">
+                                <object class="GtkTextView" id="text_view">
+                                    <property name="sensitive">true</property>
+                                </object>
+                            </property>
+                        </object>
+                    </property>
+                    <child type="bottom">
+                        <object class="GtkActionBar">
+                            <!--                            <property name="revealed">false</property>-->
+                            <child>
+                                <object class="GtkButton" id="save_file_button">
+                                    <property name="label">Save</property>
+                                    <style>
+                                        <class name="destructive-action"/>
+                                    </style>
+                                </object>>
+                            </child>
+                        </object>
+                    </child>
+                </object>
+            </child>
+        </object>
         <menu id="button_run_menu">
             <section>
                 <item>

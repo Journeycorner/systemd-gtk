@@ -8,7 +8,6 @@ glib::wrapper! {
     pub struct UnitObject(ObjectSubclass<imp::UnitObject>);
 }
 
-
 impl UnitObject {
     pub fn new(u: UnitService) -> Self {
         Object::builder()

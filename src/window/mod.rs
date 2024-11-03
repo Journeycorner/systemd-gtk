@@ -1,17 +1,25 @@
 mod imp;
 
-use crate::systemd::{SystemCtrlAction, unit::UnitObject};
+use crate::systemd::{unit::UnitObject, SystemCtrlAction};
 use crate::{systemd, table};
 use adw::gio::{ActionEntry, ListStore};
 use adw::glib::{clone, Object};
-use adw::prelude::{ActionMapExtManual, Cast};
+use adw::prelude::{ActionMapExtManual, AdwDialogExt, Cast};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib, Toast, ToastOverlay};
 use async_channel::{Receiver, Sender};
-use gtk::prelude::{EditableExt, FilterExt, SelectionModelExt, WidgetExt};
-use gtk::{CustomFilter, FilterChange, FilterListModel, SingleSelection, SortListModel};
+use gtk::prelude::{
+    ActionableExtManual, ButtonExt, EditableExt, FilterExt, SelectionModelExt, TextBufferExt,
+    TextViewExt, WidgetExt,
+};
+use gtk::{
+    CustomFilter, FilterChange, FilterListModel, SingleSelection, SortListModel, TextBuffer,
+};
 use std::cell::RefCell;
+use std::fmt::Write;
 use std::future::Future;
+use std::io::Write as IoWrite;
+use std::process::{Command, Stdio};
 use std::rc::Rc;
 use std::time::Instant;
 
@@ -74,7 +82,7 @@ impl Window {
     fn await_units_data(
         units_receiver: Receiver<Vec<UnitObject>>,
         model: ListStore,
-    ) -> impl Future<Output=()> + Sized {
+    ) -> impl Future<Output = ()> + Sized {
         clone!(
             #[weak]
             model,
@@ -120,6 +128,11 @@ impl Window {
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {
         let action_button_clone = self.imp().action_button.clone();
         let bottom_bar_clone = self.imp().bottom_bar.clone();
+        let edit_button_clone = self.imp().edit_button.clone();
+        let dialog_clone = self.imp().dialog.clone();
+        let text_view_clone = self.imp().text_view.clone();
+        let save_file_button_clone = self.imp().save_file_button.clone();
+
         single_selection.connect_selection_changed(move |selection, _, _| {
             bottom_bar_clone.set_revealed(true);
             let unit_object = selection
@@ -127,7 +140,45 @@ impl Window {
                 .unwrap()
                 .downcast::<UnitObject>()
                 .unwrap();
-            println!("Available actions: {:?}", SystemCtrlAction::available_actions(&unit_object));
+            let dialog_clone_clone = dialog_clone.clone();
+            let dialog_clone_clone_clone = dialog_clone.clone();
+            edit_button_clone.connect_clicked(move |_| {
+                dialog_clone_clone.present(None::<gtk::Widget>.as_ref());
+            });
+
+            let unit_file_content = systemd::cat(unit_object.clone());
+            if let Ok(content) = unit_file_content {
+                text_view_clone
+                    .buffer()
+                    .write_str(content.as_str())
+                    .expect("Couldn't write to buffer.");
+                edit_button_clone.set_sensitive(true);
+                text_view_clone.set_vexpand(true);
+                text_view_clone.set_hexpand(true);
+
+                let file_path = content
+                    .lines()
+                    .next()
+                    .unwrap()
+                    .split_whitespace()
+                    .nth(1)
+                    .unwrap()
+                    .to_string(); // Clone as an owned String
+                dialog_clone_clone_clone.set_title(&file_path);
+                let text_view_clone_clone = text_view_clone.clone();
+                save_file_button_clone.connect_clicked(move |_| {
+                    let changed_content =
+                        Self::get_text_from_buffer(&text_view_clone_clone.buffer());
+                    Self::save_file_as_root(changed_content.as_str(), file_path.as_str());
+                });
+            } else {
+                edit_button_clone.set_sensitive(false);
+            }
+
+            println!(
+                "Available actions: {:?}",
+                SystemCtrlAction::available_actions(&unit_object)
+            );
             let active = unit_object.state().eq("active");
             if active {
                 action_button_clone.set_label("Stop");
@@ -162,5 +213,39 @@ impl Window {
             })
             .build();
         self.add_action_entries([search_filter]);
+    }
+
+    fn save_file_as_root(content: &str, destination: &str) -> std::io::Result<()> {
+        // Spawn a `pkexec` process to run `tee` as root
+        let mut child = Command::new("pkexec")
+            .arg("tee")
+            .arg(destination)
+            .stdin(Stdio::piped()) // Pipe content to `tee` via stdin
+            .spawn()
+            .expect("Failed to start pkexec with tee");
+
+        // Write the content to the child process's stdin
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin.write_all(content.as_bytes())?;
+        }
+
+        // Wait for the command to complete
+        let status = child.wait()?;
+        if status.success() {
+            println!("File successfully saved with root permissions.");
+        } else {
+            eprintln!("Failed to save file with root permissions.");
+        }
+
+        Ok(())
+    }
+
+    fn get_text_from_buffer(buffer: &TextBuffer) -> String {
+        // Get the start and end iterators for the buffer content
+        let start_iter = buffer.start_iter();
+        let end_iter = buffer.end_iter();
+
+        // Extract the text between start and end as a GString, then convert to a Rust String
+        buffer.text(&start_iter, &end_iter, true).to_string()
     }
 }

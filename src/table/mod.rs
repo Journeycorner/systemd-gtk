@@ -1,7 +1,10 @@
 use crate::systemd::unit::UnitObject;
 use adw::prelude::{Cast, CastNone, ListItemExt, WidgetExt};
 use gtk::glib::Object;
-use gtk::{Align, ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, ListItemFactory, Ordering, SignalListItemFactory, SortType};
+use gtk::{
+    Align, ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, ListItemFactory, Ordering,
+    SignalListItemFactory, SortType,
+};
 
 /// Sets up the columns for the given `ColumnView` widget.
 ///
@@ -16,7 +19,11 @@ use gtk::{Align, ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, Li
 /// This function uses GTK-RS to create columns for a `ColumnView` widget. It utilizes `SignalListItemFactory` to create list item factories,
 /// `CustomSorter` to define custom sorting for columns, and `ColumnViewColumn` to represent individual columns in the `ColumnView`.
 pub fn setup_columns(column_view: &ColumnView) {
-    let properties: &[(&str, fn(&UnitObject) -> String, Option<fn(&str) -> (&str, &str)>)] = &[
+    let properties: &[(
+        &str,
+        fn(&UnitObject) -> String,
+        Option<fn(&str) -> (&str, &str)>,
+    )] = &[
         ("UNIT", UnitObject::unit_name, Some(split_name_and_suffix)),
         ("LOAD", UnitObject::load, None),
         ("ACTIVE", UnitObject::state, None),
@@ -94,7 +101,9 @@ fn with_expand(
             let (name_a, suffix_a) = split(&value_1);
             let (name_b, suffix_b) = split(&value_2);
             return match suffix_a.cmp(&suffix_b) {
-                std::cmp::Ordering::Equal => string_compare_sort((&name_a).parse().unwrap(), name_b.parse().unwrap()),
+                std::cmp::Ordering::Equal => {
+                    string_compare_sort((&name_a).parse().unwrap(), name_b.parse().unwrap())
+                }
                 other => other.into(),
             };
         } else {

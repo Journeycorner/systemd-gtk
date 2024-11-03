@@ -3,8 +3,8 @@ mod table;
 mod window;
 
 use crate::window::Window;
-use adw::{gio, glib, Application};
 use adw::prelude::*;
+use adw::{gio, glib, Application};
 
 const APP_ID: &str = "com.journeycorner.systemd-gtk";
 

@@ -51,10 +51,15 @@ impl SystemCtrlAction {
     }
 }
 
-
-static SYSTEM_CTL: LazyLock<SystemCtl, fn() -> SystemCtl> = LazyLock::new(|| SystemCtl::builder()
-    .additional_args(vec![String::from("--all"), String::from("--no-legend"), String::from("--no-pager")])
-    .build());
+static SYSTEM_CTL: LazyLock<SystemCtl, fn() -> SystemCtl> = LazyLock::new(|| {
+    SystemCtl::builder()
+        .additional_args(vec![
+            String::from("--all"),
+            String::from("--no-legend"),
+            String::from("--no-pager"),
+        ])
+        .build()
+});
 
 /// Lists all units.
 ///
@@ -209,7 +214,6 @@ pub fn disable(unit: UnitObject) {
         .expect("Could not disable unit");
 }
 
-
 /// Displays the contents of the unit file for the specified unit.
 ///
 /// This function attempts to retrieve and display the contents of the unit file.
@@ -233,8 +237,7 @@ pub fn disable(unit: UnitObject) {
 ///
 /// See `man systemctl` for more details.
 pub fn cat(unit: UnitObject) -> std::io::Result<String> {
-    SYSTEM_CTL
-        .cat(unit.unit_name().as_str())
+    SYSTEM_CTL.cat(unit.unit_name().as_str())
 }
 
 /// Displays detailed information about the specified unit.
