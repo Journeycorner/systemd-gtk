@@ -55,7 +55,7 @@
                                 </child>
                                 <child>
                                     <object class="GtkButton" id="edit_button">
-                                        <property name="label">Edit unit file</property>
+                                        <property name="label">View unit file</property>
                                     </object>>
                                 </child>
                             </object>
@@ -66,36 +66,23 @@
         </property>
         <object class="AdwDialog" id="dialog">
             <property name="follows_content_size">true</property>
-            <property name="presentation_mode">"ADW_DIALOG_BOTTOM_SHEET"</property>
             <child>
                 <object class="AdwToolbarView">
                     <property name="width_request">800</property>
                     <property name="height_request">600</property>
                     <child type="top">
-                        <object class="AdwHeaderBar"/>
+                        <object class="AdwHeaderBar" id="file_header_bar"/>
                     </child>
                     <property name="content">
                         <object class="GtkScrolledWindow">
                             <property name="child">
                                 <object class="GtkTextView" id="text_view">
-                                    <property name="sensitive">true</property>
+                                    <property name="editable">false</property>
+                                    <property name="cursor-visible">false</property>
                                 </object>
                             </property>
                         </object>
                     </property>
-                    <child type="bottom">
-                        <object class="GtkActionBar">
-                            <!--                            <property name="revealed">false</property>-->
-                            <child>
-                                <object class="GtkButton" id="save_file_button">
-                                    <property name="label">Save</property>
-                                    <style>
-                                        <class name="destructive-action"/>
-                                    </style>
-                                </object>>
-                            </child>
-                        </object>
-                    </child>
                 </object>
             </child>
         </object>
