@@ -1,8 +1,6 @@
 use adw::glib::subclass::InitializingObject;
-use adw::prelude::AdwDialogExt;
 use adw::subclass::prelude::*;
 use adw::{glib, Dialog, HeaderBar, SplitButton, ToastOverlay};
-use gtk::prelude::WidgetExt;
 use gtk::{ActionBar, Button, ColumnView, CompositeTemplate, SearchEntry, TextView};
 
 // Object holding the state
@@ -64,11 +62,6 @@ impl ObjectImpl for Window {
         let obj = self.obj();
         obj.setup_column_view();
         obj.setup_actions();
-
-        self.dialog.get().connect_destroy(move |win| {
-            // Hide the window instead of destroying it
-            win.close();
-        });
     }
 }
 

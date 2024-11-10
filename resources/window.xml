@@ -34,6 +34,7 @@
                             <object class="GtkScrolledWindow">
                                 <property name="child">
                                     <object class="GtkColumnView" id="column_view">
+                                        <property name="reorderable">false</property>
                                     </object>
                                 </property>
                             </object>

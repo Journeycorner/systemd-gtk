@@ -1,10 +1,8 @@
 use crate::systemd::unit::UnitObject;
 use adw::prelude::{Cast, CastNone, ListItemExt, WidgetExt};
 use gtk::glib::Object;
-use gtk::{
-    Align, ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, ListItemFactory, Ordering,
-    SignalListItemFactory, SortType,
-};
+use gtk::prelude::BoxExt;
+use gtk::{ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, ListItemFactory, Ordering, SignalListItemFactory, SortType};
 
 /// Sets up the columns for the given `ColumnView` widget.
 ///
@@ -34,27 +32,34 @@ pub fn setup_columns(column_view: &ColumnView) {
     for (title, getter, split_func) in properties {
         let factory = create_factory(*getter);
         let column = with_expand(title, factory, *getter, *split_func);
-        column_view.append_column(&column);
         // sort by unit column by default
         if "UNIT".eq(*title) {
             column_view.sort_by_column(Some(&column), SortType::Ascending);
         }
+        column_view.append_column(&column);
     }
 }
 
 fn create_factory(getter: fn(&UnitObject) -> String) -> SignalListItemFactory {
     let factory = SignalListItemFactory::new();
     factory.connect_setup(|_, list_item| setup_factory(list_item));
-    factory.connect_bind(move |_, list_item| build_label(list_item, getter, 1_000));
+    factory.connect_bind(move |_, list_item| {
+        build_label(list_item, getter, 1_000)
+    }
+    );
     factory
 }
 
 fn setup_factory(list_item: &Object) {
-    let label = Label::new(None);
-    list_item
+    let list_item = list_item
         .downcast_ref::<ListItem>()
-        .expect("Needs to be ListItem")
-        .set_child(Some(&label));
+        .expect("Needs to be ListItem");
+
+    let label = Label::new(None);
+    let boxx = gtk::Box::default();
+    boxx.append(&label);
+
+    list_item.set_child(Some(&boxx));
 }
 
 fn build_label(list_item: &Object, transform_fn: fn(&UnitObject) -> String, max_len: usize) {
@@ -65,13 +70,20 @@ fn build_label(list_item: &Object, transform_fn: fn(&UnitObject) -> String, max_
         .and_downcast::<UnitObject>()
         .expect("The item has to be an `UnitObject`.");
 
-    let label = list_item
+    let boxx = list_item
         .downcast_ref::<ListItem>()
         .expect("Needs to be ListItem")
         .child()
-        .and_downcast::<Label>()
+        .and_downcast::<gtk::Box>()
+        .expect("The child has to be a `Box`.");
+    // TODO use file name
+    boxx.set_tooltip_text(Some(unit_object.unit_name().as_str()));
+
+    let label = boxx
+        .first_child()
+        .unwrap()
+        .downcast::<Label>()
         .expect("The child has to be a `Label`.");
-    label.set_halign(Align::Start);
 
     let label_text = transform_fn(&unit_object);
     label.set_label(&shorten_string(label_text, max_len));
