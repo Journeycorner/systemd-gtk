@@ -12,9 +12,7 @@ use gtk::prelude::{
     ActionableExtManual, ButtonExt, EditableExt, FilterExt, SelectionModelExt, TextBufferExt,
     TextViewExt, WidgetExt,
 };
-use gtk::{
-    CustomFilter, FilterChange, FilterListModel, SingleSelection, SortListModel,
-};
+use gtk::{CustomFilter, EventControllerFocus, FilterChange, FilterListModel, SingleSelection, SortListModel};
 use std::cell::RefCell;
 use std::fmt::Write;
 use std::future::Future;
@@ -202,11 +200,23 @@ impl Window {
     }
 
     fn setup_actions(&self) {
-        let search_filter = ActionEntry::builder("search_filter")
+        let search_filter_action = ActionEntry::builder("search_filter")
             .activate(|window: &Self, _, _| {
+                window.imp().search_filter.set_visible(true);
                 window.imp().search_filter.grab_focus();
             })
             .build();
-        self.add_action_entries([search_filter]);
+
+        self.add_action_entries([search_filter_action]);
+    }
+
+    fn setup_search_filter_focus_controller(&self) {
+        // Create a focus event controller
+        let focus_controller = EventControllerFocus::new();
+        let search_filter_clone = self.imp().search_filter.clone();
+        focus_controller.connect_leave(move |_| search_filter_clone.set_visible(false));
+
+        // Add the controller to the entry widget
+        self.imp().search_filter.add_controller(focus_controller);
     }
 }

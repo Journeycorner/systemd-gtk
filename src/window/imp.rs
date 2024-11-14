@@ -1,7 +1,7 @@
 use adw::glib::subclass::InitializingObject;
 use adw::subclass::prelude::*;
 use adw::{glib, Dialog, HeaderBar, SplitButton, ToastOverlay};
-use gtk::{ActionBar, Button, ColumnView, CompositeTemplate, SearchEntry, TextView};
+use gtk::{ActionBar, Button, ColumnView, CompositeTemplate, SearchBar, SearchEntry, TextView};
 
 // Object holding the state
 #[derive(CompositeTemplate, Default)]
@@ -62,6 +62,7 @@ impl ObjectImpl for Window {
         let obj = self.obj();
         obj.setup_column_view();
         obj.setup_actions();
+        obj.setup_search_filter_focus_controller();
     }
 }
 
