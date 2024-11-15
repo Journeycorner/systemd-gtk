@@ -3,5 +3,6 @@
     <gresource prefix="/com/journeycorner/systemd-gtk/">
         <file compressed="true" preprocess="xml-stripblanks" alias="gtk/help-overlay.ui">shortcuts.xml</file>
         <file compressed="true" preprocess="xml-stripblanks">window.xml</file>
+        <file compressed="true">style.css</file>
     </gresource>
 </gresources>

@@ -76,8 +76,16 @@ fn build_label(list_item: &Object, transform_fn: fn(&UnitObject) -> String, max_
         .child()
         .and_downcast::<gtk::Box>()
         .expect("The child has to be a `Box`.");
+
     // TODO use file name
     boxx.set_tooltip_text(Some(unit_object.unit_name().as_str()));
+
+    let _ = if !unit_object.state().eq("active") {
+        WidgetExt::add_css_class
+    } else {
+        // removal is necessary because of widget reuse
+        WidgetExt::remove_css_class
+    }(&boxx, "inactive");
 
     let label = boxx
         .first_child()
