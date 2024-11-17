@@ -48,19 +48,52 @@
                             <object class="GtkActionBar" id="bottom_bar">
                                 <property name="revealed">false</property>
                                 <child>
-                                    <object class="AdwSplitButton" id="action_button">
+                                    <object class="GtkButton" id="start_button">
+                                        <property name="label">Start</property>
                                         <style>
                                             <class name="destructive-action"/>
                                         </style>
-                                        <property name="sensitive">true</property>
-                                        <property name="halign">3</property>
-                                        <property name="label">Stop</property>
-                                        <property name="menu-model">button_run_menu</property>
-                                        <property name="focusable">false</property>
                                     </object>
+                                    >
                                 </child>
                                 <child>
-                                    <object class="GtkButton" id="edit_button">
+                                    <object class="GtkButton" id="restart_button">
+                                        <property name="label">Restart</property>
+                                        <style>
+                                            <class name="destructive-action"/>
+                                        </style>
+                                    </object>
+                                    >
+                                </child>
+                                <child>
+                                    <object class="GtkButton" id="stop_button">
+                                        <property name="label">Stop</property>
+                                        <style>
+                                            <class name="destructive-action"/>
+                                        </style>
+                                    </object>
+                                    >
+                                </child>
+                                <child>
+                                    <object class="GtkButton" id="enable_button">
+                                        <property name="label">Enable</property>
+                                        <style>
+                                            <class name="destructive-action"/>
+                                        </style>
+                                    </object>
+                                    >
+                                </child>
+                                <child>
+                                    <object class="GtkButton" id="disable_button">
+                                        <property name="label">Disable</property>
+                                        <style>
+                                            <class name="destructive-action"/>
+                                        </style>
+                                    </object>
+                                    >
+                                </child>
+                                <child>
+                                    <object class="GtkButton" id="view_unit_button">
                                         <property name="label">View unit file</property>
                                     </object>>
                                 </child>
@@ -92,18 +125,5 @@
                 </object>
             </child>
         </object>
-        <menu id="button_run_menu">
-            <section>
-                <item>
-                    <attribute name="label">Restart</attribute>
-                </item>
-                <item>
-                    <attribute name="label">Enable</attribute>
-                </item>
-                <item>
-                    <attribute name="label">Disable</attribute>
-                </item>
-            </section>
-        </menu>
     </template>
 </interface>

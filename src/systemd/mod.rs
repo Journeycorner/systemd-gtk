@@ -26,7 +26,7 @@ enum State {
     Reloading,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum SystemCtrlAction {
     Start,
     Stop,

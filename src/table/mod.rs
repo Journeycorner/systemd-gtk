@@ -2,7 +2,10 @@ use crate::systemd::unit::UnitObject;
 use adw::prelude::{Cast, CastNone, ListItemExt, WidgetExt};
 use gtk::glib::Object;
 use gtk::prelude::BoxExt;
-use gtk::{ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, ListItemFactory, Ordering, SignalListItemFactory, SortType};
+use gtk::{
+    ColumnView, ColumnViewColumn, CustomSorter, Label, ListItem, ListItemFactory, Ordering,
+    SignalListItemFactory, SortType,
+};
 
 /// Sets up the columns for the given `ColumnView` widget.
 ///
@@ -43,10 +46,7 @@ pub fn setup_columns(column_view: &ColumnView) {
 fn create_factory(getter: fn(&UnitObject) -> String) -> SignalListItemFactory {
     let factory = SignalListItemFactory::new();
     factory.connect_setup(|_, list_item| setup_factory(list_item));
-    factory.connect_bind(move |_, list_item| {
-        build_label(list_item, getter, 1_000)
-    }
-    );
+    factory.connect_bind(move |_, list_item| build_label(list_item, getter, 1_000));
     factory
 }
 

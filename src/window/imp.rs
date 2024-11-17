@@ -1,6 +1,6 @@
 use adw::glib::subclass::InitializingObject;
 use adw::subclass::prelude::*;
-use adw::{glib, Dialog, HeaderBar, SplitButton, ToastOverlay};
+use adw::{glib, Dialog, HeaderBar, ToastOverlay};
 use gtk::{ActionBar, Button, ColumnView, CompositeTemplate, SearchBar, SearchEntry, TextView};
 
 // Object holding the state
@@ -23,13 +23,25 @@ pub struct Window {
     pub bottom_bar: TemplateChild<ActionBar>,
 
     #[template_child]
-    pub action_button: TemplateChild<SplitButton>,
-
-    #[template_child]
     pub dialog: TemplateChild<Dialog>,
 
     #[template_child]
-    pub edit_button: TemplateChild<Button>,
+    pub start_button: TemplateChild<Button>,
+
+    #[template_child]
+    pub restart_button: TemplateChild<Button>,
+
+    #[template_child]
+    pub stop_button: TemplateChild<Button>,
+
+    #[template_child]
+    pub enable_button: TemplateChild<Button>,
+
+    #[template_child]
+    pub disable_button: TemplateChild<Button>,
+
+    #[template_child]
+    pub view_unit_button: TemplateChild<Button>,
 
     #[template_child]
     pub text_view: TemplateChild<TextView>,

@@ -12,7 +12,9 @@ use gtk::prelude::{
     ActionableExtManual, ButtonExt, EditableExt, FilterExt, SelectionModelExt, TextBufferExt,
     TextViewExt, WidgetExt,
 };
-use gtk::{CustomFilter, EventControllerFocus, FilterChange, FilterListModel, SingleSelection, SortListModel, TextBuffer};
+use gtk::{
+    Button, CustomFilter, FilterChange, FilterListModel, SingleSelection, SortListModel, TextBuffer,
+};
 use std::cell::RefCell;
 use std::fmt::Write;
 use std::future::Future;
@@ -123,13 +125,19 @@ impl Window {
     }
 
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {
-        let action_button_clone = self.imp().action_button.clone();
         let bottom_bar_clone = self.imp().bottom_bar.clone();
-        let edit_button_clone = self.imp().edit_button.clone();
+        let view_unit_button_clone = self.imp().view_unit_button.clone();
         let dialog_clone = self.imp().dialog.clone();
         let text_view_clone = self.imp().text_view.clone();
         let self_clone = self.clone();
         let search_bar_clone = self.imp().search_bar.clone();
+
+        let start_button_clone = self.imp().start_button.clone();
+        let stop_button_clone = self.imp().stop_button.clone();
+        let restart_button_clone = self.imp().restart_button.clone();
+        let enable_button_clone = self.imp().enable_button.clone();
+        let disable_button_clone = self.imp().disable_button.clone();
+
         single_selection.connect_selection_changed(move |selection, _, _| {
             search_bar_clone.set_search_mode(false);
             bottom_bar_clone.set_revealed(true);
@@ -138,14 +146,15 @@ impl Window {
                 .unwrap()
                 .downcast::<UnitObject>()
                 .unwrap();
-            edit_button_clone.connect_clicked(clone!(
+            view_unit_button_clone.connect_clicked(clone!(
                 #[weak]
                 dialog_clone,
                 #[weak]
                 self_clone,
                 move |_| {
-                dialog_clone.present(Some(&self_clone));
-            }));
+                    dialog_clone.present(Some(&self_clone));
+                }
+            ));
 
             let unit_file_content = systemd::cat(unit_object.clone());
             if let Ok(content) = unit_file_content {
@@ -155,7 +164,7 @@ impl Window {
                     .buffer()
                     .write_str(content.as_str())
                     .expect("Couldn't write to buffer.");
-                edit_button_clone.set_sensitive(true);
+                view_unit_button_clone.set_sensitive(true);
                 text_view_clone.set_vexpand(true);
                 text_view_clone.set_hexpand(true);
 
@@ -169,20 +178,28 @@ impl Window {
                     .to_string(); // Clone as an owned String
                 dialog_clone.set_title(&file_path);
             } else {
-                edit_button_clone.set_sensitive(false);
+                view_unit_button_clone.set_sensitive(false);
             }
 
-            println!(
-                "Available actions: {:?}",
-                SystemCtrlAction::available_actions(&unit_object)
-            );
-            let active = unit_object.state().eq("active");
-            if active {
-                action_button_clone.set_label("Stop");
-                action_button_clone.connect_clicked(move |_| systemd::stop(unit_object.clone()));
-            } else {
-                action_button_clone.set_label("Start");
-                action_button_clone.connect_clicked(move |_| systemd::start(unit_object.clone()));
+            // Define a list of actions and their corresponding buttons
+            let actions_buttons = [
+                (&SystemCtrlAction::Start, &start_button_clone),
+                (&SystemCtrlAction::Stop, &stop_button_clone),
+                (&SystemCtrlAction::Restart, &restart_button_clone),
+                (&SystemCtrlAction::Enable, &enable_button_clone),
+                (&SystemCtrlAction::Disable, &disable_button_clone),
+            ];
+
+            // Get the available actions once
+            let available_actions = SystemCtrlAction::available_actions(&unit_object);
+
+            // Iterate over each (action, button) pair
+            for (action, button) in actions_buttons {
+                if available_actions.contains(&action) {
+                    enable_button(action, button, unit_object.clone());
+                } else {
+                    disable_button(button);
+                }
             }
         });
     }
@@ -210,5 +227,23 @@ impl Window {
 
         self.add_action_entries([search_bar_action]);
     }
+}
 
+fn enable_button(action: &SystemCtrlAction, button: &Button, unit: UnitObject) {
+    match action {
+        SystemCtrlAction::Start => button.connect_clicked(move |_| systemd::start(unit.clone())),
+        SystemCtrlAction::Stop => button.connect_clicked(move |_| systemd::stop(unit.clone())),
+        SystemCtrlAction::Restart => {
+            button.connect_clicked(move |_| systemd::restart(unit.clone()))
+        }
+        SystemCtrlAction::Enable => button.connect_clicked(move |_| systemd::enable(unit.clone())),
+        SystemCtrlAction::Disable => {
+            button.connect_clicked(move |_| systemd::disable(unit.clone()))
+        }
+    };
+    button.set_visible(true);
+}
+
+fn disable_button(button: &Button) {
+    button.set_visible(false);
 }
