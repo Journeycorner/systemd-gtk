@@ -14,6 +14,9 @@ pub struct Window {
     pub column_view: TemplateChild<ColumnView>,
 
     #[template_child]
+    pub search_bar: TemplateChild<SearchBar>,
+
+    #[template_child]
     pub search_filter: TemplateChild<SearchEntry>,
 
     #[template_child]
@@ -62,7 +65,6 @@ impl ObjectImpl for Window {
         let obj = self.obj();
         obj.setup_column_view();
         obj.setup_actions();
-        obj.setup_search_filter_focus_controller();
     }
 }
 

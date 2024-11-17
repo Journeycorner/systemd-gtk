@@ -30,8 +30,7 @@ fn build_ui(app: &adw::Application) {
 }
 
 fn setup_shortcuts(app: &Application) {
-    app.set_accels_for_action("win.search_filter", &["<Ctrl>f"]);
+    app.set_accels_for_action("win.search_bar_show", &["<Ctrl>f"]);
     app.set_accels_for_action("win.show-help-overlay", &["<Ctrl>h"]);
-    // TODO add esc for closing search
     // TODO add double click for opening detail view
 }

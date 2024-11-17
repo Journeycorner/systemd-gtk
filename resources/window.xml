@@ -15,12 +15,15 @@
         <property name="content">
             <object class="AdwToastOverlay" id="overlay">
                 <child>
-                    <object class="AdwToolbarView">
+                    <object class="AdwToolbarView" id="container">
                         <child type="top">
                             <object class="AdwHeaderBar">
                                 <child type="start">
-                                    <object class="GtkSearchEntry" id="search_filter">
-                                        <property name="visible">false</property>
+                                    <object class="GtkSearchBar" id="search_bar">
+                                        <property name="key-capture-widget">container</property>
+                                        <child>
+                                            <object class="GtkSearchEntry" id="search_filter"></object>
+                                        </child>
                                     </object>
                                 </child>
                                 <child type="end">

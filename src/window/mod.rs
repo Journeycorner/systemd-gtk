@@ -129,7 +129,9 @@ impl Window {
         let dialog_clone = self.imp().dialog.clone();
         let text_view_clone = self.imp().text_view.clone();
         let self_clone = self.clone();
+        let search_bar_clone = self.imp().search_bar.clone();
         single_selection.connect_selection_changed(move |selection, _, _| {
+            search_bar_clone.set_search_mode(false);
             bottom_bar_clone.set_revealed(true);
             let unit_object = selection
                 .selected_item()
@@ -202,23 +204,11 @@ impl Window {
     }
 
     fn setup_actions(&self) {
-        let search_filter_action = ActionEntry::builder("search_filter")
-            .activate(|window: &Self, _, _| {
-                window.imp().search_filter.set_visible(true);
-                window.imp().search_filter.grab_focus();
-            })
+        let search_bar_action = ActionEntry::builder("search_bar_show")
+            .activate(|window: &Self, _, _| window.imp().search_bar.set_search_mode(true))
             .build();
 
-        self.add_action_entries([search_filter_action]);
+        self.add_action_entries([search_bar_action]);
     }
 
-    fn setup_search_filter_focus_controller(&self) {
-        // Create a focus event controller
-        let focus_controller = EventControllerFocus::new();
-        let search_filter_clone = self.imp().search_filter.clone();
-        focus_controller.connect_leave(move |_| search_filter_clone.set_visible(false));
-
-        // Add the controller to the entry widget
-        self.imp().search_filter.add_controller(focus_controller);
-    }
 }
