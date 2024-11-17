@@ -80,12 +80,12 @@ fn build_label(list_item: &Object, transform_fn: fn(&UnitObject) -> String, max_
     // TODO use file name
     boxx.set_tooltip_text(Some(unit_object.unit_name().as_str()));
 
-    let _ = if !unit_object.state().eq("active") {
-        WidgetExt::add_css_class
+    if !unit_object.state().eq("active") {
+        WidgetExt::add_css_class(&boxx, "active");
     } else {
         // removal is necessary because of widget reuse
-        WidgetExt::remove_css_class
-    }(&boxx, "inactive");
+        WidgetExt::remove_css_class(&boxx, "active");
+    }
 
     let label = boxx
         .first_child()
@@ -120,12 +120,12 @@ fn with_expand(
             // special case: sort by type first and by name second
             let (name_a, suffix_a) = split(&value_1);
             let (name_b, suffix_b) = split(&value_2);
-            return match suffix_a.cmp(&suffix_b) {
+            match suffix_a.cmp(suffix_b) {
                 std::cmp::Ordering::Equal => {
-                    string_compare_sort((&name_a).parse().unwrap(), name_b.parse().unwrap())
+                    string_compare_sort(name_a.parse().unwrap(), name_b.parse().unwrap())
                 }
                 other => other.into(),
-            };
+            }
         } else {
             string_compare_sort(value_1, value_2)
         }

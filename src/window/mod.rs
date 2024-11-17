@@ -8,17 +8,13 @@ use adw::prelude::{ActionMapExtManual, AdwDialogExt, Cast};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib, Toast, ToastOverlay};
 use async_channel::{Receiver, Sender};
-use gtk::prelude::{
-    ActionableExtManual, ButtonExt, EditableExt, FilterExt, SelectionModelExt, TextBufferExt,
-    TextViewExt, WidgetExt,
-};
+use gtk::prelude::{ButtonExt, EditableExt, FilterExt, SelectionModelExt, TextViewExt, WidgetExt};
 use gtk::{
     Button, CustomFilter, FilterChange, FilterListModel, SingleSelection, SortListModel, TextBuffer,
 };
 use std::cell::RefCell;
 use std::fmt::Write;
 use std::future::Future;
-use std::io::Write as IoWrite;
 use std::rc::Rc;
 use std::time::Instant;
 
@@ -74,7 +70,7 @@ impl Window {
 
     async fn await_units_toast(toast_text_receiver: Receiver<String>, overlay_clone: ToastOverlay) {
         while let Ok(toast_text) = toast_text_receiver.recv().await {
-            overlay_clone.add_toast(Toast::new(&*toast_text));
+            overlay_clone.add_toast(Toast::new(&toast_text));
         }
     }
 
@@ -195,7 +191,7 @@ impl Window {
 
             // Iterate over each (action, button) pair
             for (action, button) in actions_buttons {
-                if available_actions.contains(&action) {
+                if available_actions.contains(action) {
                     enable_button(action, button, unit_object.clone());
                 } else {
                     disable_button(button);

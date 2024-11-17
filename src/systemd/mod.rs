@@ -2,10 +2,9 @@ pub(crate) mod unit;
 
 use crate::systemd::unit::UnitObject;
 use std::str::FromStr;
-use std::string::ToString;
 use std::sync::LazyLock;
 use strum_macros::*;
-use systemctl::{SystemCtl, Unit};
+use systemctl::SystemCtl;
 
 #[derive(Debug, PartialEq, EnumString)]
 #[strum(serialize_all = "snake_case")]
@@ -238,32 +237,4 @@ pub fn disable(unit: UnitObject) {
 /// See `man systemctl` for more details.
 pub fn cat(unit: UnitObject) -> std::io::Result<String> {
     SYSTEM_CTL.cat(unit.unit_name().as_str())
-}
-
-/// Displays detailed information about the specified unit.
-///
-/// This function attempts to retrieve detailed information about the given systemd unit.
-/// It wraps the `systemctl show` command, which provides unit properties and their values.
-///
-/// # Parameters
-/// - `unit`: The unit object to be inspected.
-///
-/// # Returns
-/// - A `Unit` object containing detailed properties of the unit.
-///
-/// # Panics
-/// - This function will panic if the unit information could not be retrieved.
-///
-/// # Related `systemctl` command
-/// The equivalent systemctl command is:
-/// ```
-/// systemctl show [UNIT]
-/// ```
-/// This command will output all available properties of the specified unit, such as status, dependencies, and more.
-///
-/// See `man systemctl` for more details.
-pub fn show(unit: UnitObject) -> Unit {
-    SYSTEM_CTL
-        .create_unit(unit.unit_name().as_str())
-        .expect("Could not retrieve unit information")
 }

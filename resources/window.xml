@@ -22,7 +22,7 @@
                                     <object class="GtkSearchBar" id="search_bar">
                                         <property name="key-capture-widget">container</property>
                                         <child>
-                                            <object class="GtkSearchEntry" id="search_filter"></object>
+                                            <object class="GtkSearchEntry" id="search_filter"/>
                                         </child>
                                     </object>
                                 </child>

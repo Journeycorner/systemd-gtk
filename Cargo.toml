@@ -9,7 +9,7 @@ async-channel = { version = "2.3", features = [] }
 gtk = { version = "0.9", package = "gtk4", features = ["gnome_47"] }
 systemctl = { git = "https://github.com/Journeycorner/systemctl", branch = "main", features = [] }
 strum_macros = "0.26.4"
-strum = "0.26.3"
+strum = { version = "0.26.3", features = [] }
 
 [build-dependencies]
 glib-build-tools = "0.20.0"
