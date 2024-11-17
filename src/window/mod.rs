@@ -12,7 +12,7 @@ use gtk::prelude::{
     ActionableExtManual, ButtonExt, EditableExt, FilterExt, SelectionModelExt, TextBufferExt,
     TextViewExt, WidgetExt,
 };
-use gtk::{CustomFilter, EventControllerFocus, FilterChange, FilterListModel, SingleSelection, SortListModel};
+use gtk::{CustomFilter, EventControllerFocus, FilterChange, FilterListModel, SingleSelection, SortListModel, TextBuffer};
 use std::cell::RefCell;
 use std::fmt::Write;
 use std::future::Future;
@@ -147,6 +147,8 @@ impl Window {
 
             let unit_file_content = systemd::cat(unit_object.clone());
             if let Ok(content) = unit_file_content {
+                // open new text buffer, otherwise the content will be concatenated
+                text_view_clone.set_buffer(Some(&TextBuffer::default()));
                 text_view_clone
                     .buffer()
                     .write_str(content.as_str())
