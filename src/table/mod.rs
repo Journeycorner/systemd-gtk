@@ -83,7 +83,6 @@ fn build_label(list_item: &Object, transform_fn: fn(&UnitObject) -> String) {
         .and_downcast::<gtk::Box>()
         .expect("The child has to be a `Box`.");
 
-    // TODO use file name
     boxx.set_tooltip_text(Some(unit_object.unit_name().as_str()));
 
     if !unit_object.state().eq("active") {

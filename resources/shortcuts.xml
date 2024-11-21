@@ -20,7 +20,15 @@
                             <object class="GtkShortcutsShortcut">
                                 <property name="title" translatable="yes" context="shortcut window">Filter units
                                 </property>
-                                <property name="action-name">win.search_filter</property>
+                                <property name="action-name">win.search_bar_show</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="title" translatable="yes" context="shortcut window">Show unit file
+                                    content
+                                </property>
+                                <property name="action-name">win.view_unit_action</property>
                             </object>
                         </child>
                     </object>

@@ -220,8 +220,16 @@ impl Window {
         let search_bar_action = ActionEntry::builder("search_bar_show")
             .activate(|window: &Self, _, _| window.imp().search_bar.set_search_mode(true))
             .build();
+        let view_unit_action = ActionEntry::builder("view_unit_action")
+            .activate(|window: &Self, _, _| {
+                let button = &window.imp().view_unit_button;
+                if button.get_sensitive() {
+                    button.emit_clicked()
+                }
+            })
+            .build();
 
-        self.add_action_entries([search_bar_action]);
+        self.add_action_entries([search_bar_action, view_unit_action]);
     }
 }
 
