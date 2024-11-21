@@ -35,11 +35,11 @@ pub fn setup_columns(column_view: &ColumnView) {
     for (title, getter, split_func) in properties {
         let factory = create_factory(*getter);
         let column = with_expand(title, factory, *getter, *split_func);
+        column_view.append_column(&column);
         // sort by unit column by default
         if "UNIT".eq(*title) {
             column_view.sort_by_column(Some(&column), SortType::Ascending);
         }
-        column_view.append_column(&column);
     }
 }
 
