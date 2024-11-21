@@ -13,3 +13,8 @@ strum = { version = "0.26.3", features = [] }
 
 [build-dependencies]
 glib-build-tools = "0.20.0"
+
+[profile.release-lto]
+inherits = "release"
+lto = "fat"
+strip = "symbols"
