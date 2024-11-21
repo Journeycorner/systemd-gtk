@@ -81,10 +81,10 @@ fn build_label(list_item: &Object, transform_fn: fn(&UnitObject) -> String, max_
     boxx.set_tooltip_text(Some(unit_object.unit_name().as_str()));
 
     if !unit_object.state().eq("active") {
-        WidgetExt::add_css_class(&boxx, "active");
+        WidgetExt::add_css_class(&boxx, "inactive");
     } else {
         // removal is necessary because of widget reuse
-        WidgetExt::remove_css_class(&boxx, "active");
+        WidgetExt::remove_css_class(&boxx, "inactive");
     }
 
     let label = boxx
