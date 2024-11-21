@@ -8,8 +8,7 @@ adw = { version = "0.7", package = "libadwaita", features = ["v1_6"] }
 async-channel = { version = "2.3", features = [] }
 gtk = { version = "0.9", package = "gtk4", features = ["gnome_47"] }
 systemctl = { git = "https://github.com/Journeycorner/systemctl", branch = "main", features = [] }
-strum_macros = "0.26.4"
-strum = { version = "0.26.3", features = [] }
+strum = { version = "0.26.3", features = ["derive"] }
 
 [build-dependencies]
 glib-build-tools = "0.20.0"

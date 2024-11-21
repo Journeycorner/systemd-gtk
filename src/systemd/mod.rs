@@ -3,7 +3,7 @@ pub(crate) mod unit;
 use crate::systemd::unit::UnitObject;
 use std::str::FromStr;
 use std::sync::LazyLock;
-use strum_macros::*;
+use strum::EnumString;
 use systemctl::SystemCtl;
 
 #[derive(Debug, PartialEq, EnumString)]
