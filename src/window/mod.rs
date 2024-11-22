@@ -32,13 +32,9 @@ impl Window {
     }
 
     fn setup_column_view(&self) {
-        // Create channel that can hold at most 1 message at a time
-        let (units_sender, units_receiver) = async_channel::bounded(1);
-        let (toast_text_sender, toast_text_receiver) = async_channel::bounded(1);
+        let (units_receiver, toast_text_receiver) = Self::start_update();
 
-        gio::spawn_blocking(move || Self::load_units(units_sender, toast_text_sender));
-
-        let model = ListStore::new::<UnitObject>();
+        let model = self.imp().list_store.clone().into_inner().unwrap();
         let filter_input_value: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
 
         // Clone Rc for the filter closure
@@ -62,10 +58,37 @@ impl Window {
         column_view.set_model(Some(&single_selection));
         table::setup_columns(&column_view);
 
+        Self::await_update(
+            self.imp().overlay.clone(),
+            units_receiver,
+            toast_text_receiver,
+            model,
+        );
+    }
+
+    fn start_await_update(model: ListStore, overlay: ToastOverlay) {
+        let (units_receiver, toast_text_receiver) = Self::start_update();
+        Self::await_update(overlay, units_receiver, toast_text_receiver, model);
+    }
+
+    fn await_update(
+        overlay_clone: ToastOverlay,
+        units_receiver: Receiver<Vec<UnitObject>>,
+        toast_text_receiver: Receiver<String>,
+        model: ListStore,
+    ) {
         // The main loop executes the asynchronous block
         glib::spawn_future_local(Self::await_units_data(units_receiver, model));
-        let overlay_clone = self.imp().overlay.clone();
         glib::spawn_future_local(Self::await_units_toast(toast_text_receiver, overlay_clone));
+    }
+
+    fn start_update() -> (Receiver<Vec<UnitObject>>, Receiver<String>) {
+        // Create a channel that can hold at most 1 message at a time
+        let (units_sender, units_receiver) = async_channel::bounded(1);
+        let (toast_text_sender, toast_text_receiver) = async_channel::bounded(1);
+
+        gio::spawn_blocking(move || Self::load_units(units_sender, toast_text_sender));
+        (units_receiver, toast_text_receiver)
     }
 
     async fn await_units_toast(toast_text_receiver: Receiver<String>, overlay_clone: ToastOverlay) {
@@ -83,6 +106,7 @@ impl Window {
             model,
             async move {
                 while let Ok(items) = units_receiver.recv().await {
+                    model.remove_all();
                     model.extend_from_slice(&items);
                 }
             }
@@ -133,6 +157,9 @@ impl Window {
         let restart_button_clone = self.imp().restart_button.clone();
         let enable_button_clone = self.imp().enable_button.clone();
         let disable_button_clone = self.imp().disable_button.clone();
+
+        let list_store = self.imp().list_store.clone().into_inner().unwrap();
+        let overlay = self.imp().overlay.clone();
 
         single_selection.connect_selection_changed(move |selection, _, _| {
             search_bar_clone.set_search_mode(false);
@@ -192,9 +219,15 @@ impl Window {
             // Iterate over each (action, button) pair
             for (action, button) in actions_buttons {
                 if available_actions.contains(action) {
-                    enable_button(action, button, unit_object.clone());
+                    Self::enable_button(
+                        action,
+                        button,
+                        unit_object.clone(),
+                        list_store.clone(),
+                        overlay.clone(),
+                    );
                 } else {
-                    disable_button(button);
+                    Self::disable_button(button);
                 }
             }
         });
@@ -231,23 +264,42 @@ impl Window {
 
         self.add_action_entries([search_bar_action, view_unit_action]);
     }
-}
 
-fn enable_button(action: &SystemCtrlAction, button: &Button, unit: UnitObject) {
-    match action {
-        SystemCtrlAction::Start => button.connect_clicked(move |_| systemd::start(unit.clone())),
-        SystemCtrlAction::Stop => button.connect_clicked(move |_| systemd::stop(unit.clone())),
-        SystemCtrlAction::Restart => {
-            button.connect_clicked(move |_| systemd::restart(unit.clone()))
-        }
-        SystemCtrlAction::Enable => button.connect_clicked(move |_| systemd::enable(unit.clone())),
-        SystemCtrlAction::Disable => {
-            button.connect_clicked(move |_| systemd::disable(unit.clone()))
-        }
-    };
-    button.set_visible(true);
-}
+    fn enable_button(
+        action: &SystemCtrlAction,
+        button: &Button,
+        unit: UnitObject,
+        model: ListStore,
+        overlay: ToastOverlay,
+    ) {
+        match action {
+            SystemCtrlAction::Start => button.connect_clicked(move |_| {
+                systemd::start(unit.clone());
+                Self::start_await_update(model.clone(), overlay.clone());
+            }),
+            SystemCtrlAction::Stop => button.connect_clicked(move |_| {
+                systemd::stop(unit.clone());
+                Self::start_await_update(model.clone(), overlay.clone());
+            }),
+            SystemCtrlAction::Restart => button.connect_clicked(move |_| {
+                systemd::restart(unit.clone());
+                Self::start_await_update(model.clone(), overlay.clone());
+            }),
 
-fn disable_button(button: &Button) {
-    button.set_visible(false);
+            SystemCtrlAction::Enable => button.connect_clicked(move |_| {
+                systemd::enable(unit.clone());
+                Self::start_await_update(model.clone(), overlay.clone());
+            }),
+            SystemCtrlAction::Disable => button.connect_clicked(move |_| {
+                systemd::disable(unit.clone());
+                Self::start_await_update(model.clone(), overlay.clone());
+            }),
+        };
+
+        button.set_visible(true);
+    }
+
+    fn disable_button(button: &Button) {
+        button.set_visible(false);
+    }
 }

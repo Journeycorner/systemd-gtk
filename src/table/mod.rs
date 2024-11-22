@@ -9,11 +9,7 @@ use gtk::{
 };
 
 type SplitFunction = Option<fn(&str) -> (&str, &str)>;
-type ColumnProperties<'a> = [(
-    &'a str,
-    fn(&UnitObject) -> String,
-    SplitFunction,
-)];
+type ColumnProperties<'a> = [(&'a str, fn(&UnitObject) -> String, SplitFunction)];
 
 /// Sets up the columns for the given `ColumnView` widget.
 ///

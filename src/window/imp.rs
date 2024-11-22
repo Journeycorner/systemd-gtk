@@ -1,7 +1,10 @@
+use crate::systemd::unit::UnitObject;
+use adw::gio::ListStore;
 use adw::glib::subclass::InitializingObject;
 use adw::subclass::prelude::*;
 use adw::{glib, Dialog, HeaderBar, ToastOverlay};
 use gtk::{ActionBar, Button, ColumnView, CompositeTemplate, SearchBar, SearchEntry, TextView};
+use std::cell::RefCell;
 
 // Object holding the state
 #[derive(CompositeTemplate, Default)]
@@ -48,6 +51,8 @@ pub struct Window {
 
     #[template_child]
     pub file_header_bar: TemplateChild<HeaderBar>,
+
+    pub list_store: RefCell<Option<ListStore>>,
 }
 
 // The central trait for subclassing a GObject
@@ -74,6 +79,8 @@ impl ObjectImpl for Window {
         self.parent_constructed();
 
         // Setup
+        self.list_store
+            .replace(Some(ListStore::new::<UnitObject>()));
         let obj = self.obj();
         obj.setup_column_view();
         obj.setup_actions();
