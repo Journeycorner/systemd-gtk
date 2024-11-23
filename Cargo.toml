@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-adw = { version = "0.7", package = "libadwaita", features = ["v1_6"] }
+gtk = { version = "0.9", package = "gtk4", features = ["gnome_44"] }
+adw = { version = "0.7", package = "libadwaita", features = ["v1_5"] }
 async-channel = { version = "2.3", features = [] }
-gtk = { version = "0.9", package = "gtk4", features = ["gnome_47"] }
 systemctl = { git = "https://github.com/Journeycorner/systemctl", branch = "main", features = [] }
-strum = { version = "0.26.3", features = ["derive"] }
+strum = { version = "0.26", features = ["derive"] }
 
 [build-dependencies]
 glib-build-tools = "0.20.0"
