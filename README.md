@@ -1,5 +1,7 @@
 # Systemd GTK
 
+> **⚠️ Warning:** This app is not yet production-ready and has undergone limited testing. Use it at your own risk!
+
 ## Description
 
 This application provides a graphical user interface (GUI) for common [systemd](https://systemd.io/) features.
@@ -31,7 +33,7 @@ use these actions if you know what you are doing!**
 
 ## Architecture
 
-- **UI Framework**: Built with `gtk-rs` for a modern and user-friendly interface.
+- **UI Framework**: Built with [gtk-rs](https://github.com/gtk-rs/gtk4-rs) for a modern and user-friendly interface.
 - **Systemd Interaction**: Uses the [systemctl](https://github.com/gwbres/systemctl) library, which communicates with
   `systemd` via pipes for robust
   functionality.
@@ -42,7 +44,7 @@ use these actions if you know what you are doing!**
 - [systemd](https://github.com/systemd/systemd)
 - [Rust](https://www.rust-lang.org/tools/install)
 
-## Getting Started
+## Development
 
 1. Ensure your system meets the requirements listed above.
 2. Navigate to your dev folder.
@@ -58,3 +60,17 @@ use these actions if you know what you are doing!**
 6. Create an optimized release build:
    ```bash
    cargo build --profile release-lto
+
+## Binaries
+
+Binaries for x64 are available at the [release page](https://github.com/Journeycorner/systemd-gtk/releases).
+
+## Wishlist
+
+* testing!
+* publish on [crates.io](https://crates.io/)
+* switch to upstream systemctrl dependency, once it was patched
+* free memory after viewing unit files
+* use more idiomatic Rust: get rid of some .clone() calls
+* publish [AUR](https://aur.archlinux.org/)
+* publish https://flatpak.org/
