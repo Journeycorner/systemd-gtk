@@ -32,7 +32,8 @@ use these actions if you know what you are doing!**
 ## Architecture
 
 - **UI Framework**: Built with `gtk-rs` for a modern and user-friendly interface.
-- **Systemd Interaction**: Uses the `systemctl` library, which communicates with `systemd` via pipes for robust
+- **Systemd Interaction**: Uses the [systemctl](https://github.com/gwbres/systemctl) library, which communicates with
+  `systemd` via pipes for robust
   functionality.
 
 ## Requirements
