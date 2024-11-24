@@ -8,19 +8,19 @@ use std::sync::Mutex;
 #[derive(Properties, Default)]
 #[properties(wrapper_type = super::UnitObject)]
 pub struct UnitObject {
-    #[property(get, set)]
+    #[property(get, construct_only)]
     unit_name: Mutex<String>,
 
-    #[property(get, set)]
+    #[property(get, construct_only)]
     load: Mutex<String>,
 
-    #[property(get, set)]
+    #[property(get, construct_only)]
     state: Mutex<String>,
 
-    #[property(get, set)]
+    #[property(get, construct_only)]
     sub_state: Mutex<String>,
 
-    #[property(get, set)]
+    #[property(get, construct_only)]
     description: Mutex<String>,
 }
 
