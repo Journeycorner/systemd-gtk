@@ -1,0 +1,24 @@
+# Maintainer: Florian Reisecker <florian[dot]reisecker[at]gmail[dot]com>
+
+pkgname=systemd-gtk
+pkgver=0.1.1
+pkgrel=1
+arch=('x86_64')
+pkgdesc="Tiny and fast systemd GUI written in Rust using GTK4"
+url="https://github.com/Journeycorner/systemd-gtk"
+license=('0BSD')
+conflicts=(systemd-gtk)
+provides=(systemd-gtk)
+source=("../")
+source_x86_64=("https://github.com/Journeycorner/systemd-gtk")
+sha256sums=('SKIP')
+
+package_systemd-gtk() {
+  depends=('gnome' 'systemd' 'rustup')
+  optdepends=()
+
+  cargo build --profile release-lto
+  install -D -m755 target/release-lto/systemd-gtk /usr/bin/systemd-gtk
+  install -D -m644 data/icon.svg /usr/share/pixmaps/systemd-gtk.svg
+  desktop-file-install -m 644 --dir /usr/share/applications/ data/systemd-gtk.desktop
+}

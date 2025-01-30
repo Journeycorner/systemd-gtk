@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <rect x="16" y="24" width="96" height="80" rx="8" ry="8" fill="#4A90E2" stroke="#1E3A8A" stroke-width="4"/>
+    <rect x="16" y="24" width="96" height="16" fill="#1E3A8A"/>
+    <circle cx="28" cy="32" r="3" fill="#FFFFFF"/>
+    <circle cx="40" cy="32" r="3" fill="#FFFFFF"/>
+    <circle cx="52" cy="32" r="3" fill="#FFFFFF"/>
+    <path d="M48,96 L80,40 L96,96 L64,80 L48,96 Z" fill="#FFD700" stroke="#B8860B" stroke-width="4"/>
+    <!-- Symbolic Icon -->
+    <g transform="scale(0.4) translate(160,160)">
+        <rect x="16" y="24" width="96" height="80" rx="8" ry="8" fill="none" stroke="#FFFFFF" stroke-width="6"/>
+        <path d="M48,96 L80,40 L96,96 L64,80 L48,96 Z" fill="none" stroke="#FFFFFF" stroke-width="6"/>
+    </g>
+</svg>
