@@ -53,6 +53,9 @@ pub struct Window {
     pub file_header_bar: TemplateChild<HeaderBar>,
 
     pub list_store: RefCell<Option<ListStore>>,
+
+    /// Holds the unit selected in the list so action buttons can reuse it.
+    pub selected_unit: RefCell<Option<UnitObject>>,
 }
 
 // The central trait for subclassing a GObject

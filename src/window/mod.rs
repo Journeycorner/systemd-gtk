@@ -8,12 +8,12 @@ use adw::prelude::{ActionMapExtManual, AdwDialogExt, Cast};
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use adw::{gio, glib, Toast, ToastOverlay};
 use async_channel::{Receiver, Sender};
-use gtk::prelude::{ButtonExt, EditableExt, FilterExt, SelectionModelExt, TextViewExt, WidgetExt};
-use gtk::{
-    Button, CustomFilter, FilterChange, FilterListModel, SingleSelection, SortListModel, TextBuffer,
+use gtk::prelude::{
+    ButtonExt, EditableExt, FilterExt, SelectionModelExt, TextBufferExt, TextViewExt, WidgetExt,
 };
+use gtk::{Button, CustomFilter, FilterChange, FilterListModel, SingleSelection, SortListModel};
 use std::cell::RefCell;
-use std::fmt::Write;
+use std::collections::HashSet;
 use std::future::Future;
 use std::rc::Rc;
 use std::time::Instant;
@@ -31,10 +31,18 @@ impl Window {
         Object::builder().property("application", app).build()
     }
 
+    fn list_store(&self) -> ListStore {
+        self.imp()
+            .list_store
+            .borrow()
+            .clone()
+            .expect("List store must be initialized")
+    }
+
     fn setup_column_view(&self) {
         let (units_receiver, toast_text_receiver) = Self::start_update();
 
-        let model = self.imp().list_store.clone().into_inner().unwrap();
+        let model = self.list_store();
         let filter_input_value: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
 
         // Clone Rc for the filter closure
@@ -133,104 +141,116 @@ impl Window {
         let items = systemd::units();
         let items_len = items.len();
         units_sender
-            .clone()
             .send_blocking(items)
             .expect("The channel needs to be open.");
         let duration = start.elapsed().as_millis();
         let info_text = format!("Fetched {} units in {}ms", items_len, duration);
         toast_text_sender
-            .clone()
             .send_blocking(info_text)
             .expect("The channel needs to be open.");
     }
 
     fn connect_selection_changed(&self, single_selection: &SingleSelection) {
-        let bottom_bar_clone = self.imp().bottom_bar.clone();
-        let view_unit_button_clone = self.imp().view_unit_button.clone();
-        let dialog_clone = self.imp().dialog.clone();
-        let text_view_clone = self.imp().text_view.clone();
-        let self_clone = self.clone();
-        let search_bar_clone = self.imp().search_bar.clone();
-
-        let start_button_clone = self.imp().start_button.clone();
-        let stop_button_clone = self.imp().stop_button.clone();
-        let restart_button_clone = self.imp().restart_button.clone();
-        let enable_button_clone = self.imp().enable_button.clone();
-        let disable_button_clone = self.imp().disable_button.clone();
-
-        let list_store = self.imp().list_store.clone().into_inner().unwrap();
-        let overlay = self.imp().overlay.clone();
-
-        single_selection.connect_selection_changed(move |selection, _, _| {
-            search_bar_clone.set_search_mode(false);
-            bottom_bar_clone.set_revealed(true);
-            let unit_object = selection
-                .selected_item()
-                .unwrap()
-                .downcast::<UnitObject>()
-                .unwrap();
-            view_unit_button_clone.connect_clicked(clone!(
-                #[weak]
-                dialog_clone,
-                #[weak]
-                self_clone,
-                move |_| {
-                    dialog_clone.present(Some(&self_clone));
-                }
-            ));
-
-            let unit_file_content = systemd::cat(unit_object.clone());
-            if let Ok(content) = unit_file_content {
-                // open new text buffer, otherwise the content will be concatenated
-                text_view_clone.set_buffer(Some(&TextBuffer::default()));
-                text_view_clone
-                    .buffer()
-                    .write_str(content.as_str())
-                    .expect("Couldn't write to buffer.");
-                view_unit_button_clone.set_sensitive(true);
-                text_view_clone.set_vexpand(true);
-                text_view_clone.set_hexpand(true);
-
-                let file_path = content
-                    .lines()
-                    .next()
-                    .unwrap()
-                    .split_whitespace()
-                    .nth(1)
-                    .unwrap()
-                    .to_string(); // Clone as an owned String
-                dialog_clone.set_title(&file_path);
-            } else {
-                view_unit_button_clone.set_sensitive(false);
+        single_selection.connect_selection_changed(clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |selection, _, _| {
+                window.on_selection_changed(selection);
             }
+        ));
+    }
 
-            // Define a list of actions and their corresponding buttons
-            let actions_buttons = [
-                (&SystemCtrlAction::Start, &start_button_clone),
-                (&SystemCtrlAction::Stop, &stop_button_clone),
-                (&SystemCtrlAction::Restart, &restart_button_clone),
-                (&SystemCtrlAction::Enable, &enable_button_clone),
-                (&SystemCtrlAction::Disable, &disable_button_clone),
-            ];
+    fn on_selection_changed(&self, selection: &SingleSelection) {
+        let imp = self.imp();
+        imp.search_bar.set_search_mode(false);
 
-            // Get the available actions once
-            let available_actions = SystemCtrlAction::available_actions(&unit_object);
+        let Some(item) = selection.selected_item() else {
+            self.clear_selection_state();
+            return;
+        };
 
-            // Iterate over each (action, button) pair
-            for (action, button) in actions_buttons {
-                if available_actions.contains(action) {
-                    Self::enable_button(
-                        action,
-                        button,
-                        unit_object.clone(),
-                        list_store.clone(),
-                        overlay.clone(),
-                    );
-                } else {
-                    Self::disable_button(button);
-                }
+        let Ok(unit) = item.downcast::<UnitObject>() else {
+            self.clear_selection_state();
+            return;
+        };
+
+        imp.bottom_bar.set_revealed(true);
+        imp.selected_unit.replace(Some(unit.clone()));
+        self.update_view_button(&unit);
+        self.update_action_buttons(&unit);
+    }
+
+    fn clear_selection_state(&self) {
+        {
+            let imp = self.imp();
+            imp.bottom_bar.set_revealed(false);
+            imp.selected_unit.replace(None);
+            imp.view_unit_button.set_sensitive(false);
+        }
+        self.clear_text_view();
+        self.hide_action_buttons();
+    }
+
+    fn clear_text_view(&self) {
+        self.imp().text_view.buffer().set_text("");
+    }
+
+    fn update_view_button(&self, unit: &UnitObject) {
+        match systemd::cat(unit.clone()) {
+            Ok(content) => {
+                let imp = self.imp();
+                imp.text_view.buffer().set_text(&content);
+                let title = Self::extract_unit_file_path(&content)
+                    .unwrap_or_else(|| unit.unit_name().to_string());
+                imp.dialog.set_title(&title);
+                imp.view_unit_button.set_sensitive(true);
+                imp.text_view.set_vexpand(true);
+                imp.text_view.set_hexpand(true);
             }
+            Err(err) => {
+                {
+                    let imp = self.imp();
+                    imp.view_unit_button.set_sensitive(false);
+                    imp.dialog.set_title(unit.unit_name().as_str());
+                    let message = format!("Failed to load {}: {}", unit.unit_name(), err);
+                    imp.overlay.add_toast(Toast::new(&message));
+                }
+                self.clear_text_view();
+            }
+        }
+    }
+
+    fn extract_unit_file_path(content: &str) -> Option<String> {
+        content
+            .lines()
+            .find(|line| line.starts_with('#'))
+            .and_then(|line| line.split_whitespace().nth(1))
+            .map(str::to_string)
+    }
+
+    fn update_action_buttons(&self, unit: &UnitObject) {
+        let available: HashSet<_> = SystemCtrlAction::available_actions(unit)
+            .into_iter()
+            .collect();
+        self.for_each_action_button(|action, button| {
+            button.set_visible(available.contains(&action));
         });
+    }
+
+    fn hide_action_buttons(&self) {
+        self.for_each_action_button(|_, button| button.set_visible(false));
+    }
+
+    fn for_each_action_button<F>(&self, mut f: F)
+    where
+        F: FnMut(SystemCtrlAction, &Button),
+    {
+        let imp = self.imp();
+        f(SystemCtrlAction::Start, &imp.start_button);
+        f(SystemCtrlAction::Stop, &imp.stop_button);
+        f(SystemCtrlAction::Restart, &imp.restart_button);
+        f(SystemCtrlAction::Enable, &imp.enable_button);
+        f(SystemCtrlAction::Disable, &imp.disable_button);
     }
 
     fn build_search_filter(
@@ -263,43 +283,62 @@ impl Window {
             .build();
 
         self.add_action_entries([search_bar_action, view_unit_action]);
+        self.setup_button_handlers();
     }
 
-    fn enable_button(
-        action: &SystemCtrlAction,
-        button: &Button,
-        unit: UnitObject,
-        model: ListStore,
-        overlay: ToastOverlay,
-    ) {
-        match action {
-            SystemCtrlAction::Start => button.connect_clicked(move |_| {
-                systemd::start(unit.clone());
-                Self::start_await_update(model.clone(), overlay.clone());
-            }),
-            SystemCtrlAction::Stop => button.connect_clicked(move |_| {
-                systemd::stop(unit.clone());
-                Self::start_await_update(model.clone(), overlay.clone());
-            }),
-            SystemCtrlAction::Restart => button.connect_clicked(move |_| {
-                systemd::restart(unit.clone());
-                Self::start_await_update(model.clone(), overlay.clone());
-            }),
+    fn setup_button_handlers(&self) {
+        let dialog = self.imp().dialog.clone();
+        let view_unit_button = self.imp().view_unit_button.clone();
+        view_unit_button.connect_clicked(clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| {
+                dialog.present(Some(&window));
+            }
+        ));
 
-            SystemCtrlAction::Enable => button.connect_clicked(move |_| {
-                systemd::enable(unit.clone());
-                Self::start_await_update(model.clone(), overlay.clone());
-            }),
-            SystemCtrlAction::Disable => button.connect_clicked(move |_| {
-                systemd::disable(unit.clone());
-                Self::start_await_update(model.clone(), overlay.clone());
-            }),
+        let start_button = self.imp().start_button.clone();
+        self.connect_action_button(SystemCtrlAction::Start, &start_button);
+        let stop_button = self.imp().stop_button.clone();
+        self.connect_action_button(SystemCtrlAction::Stop, &stop_button);
+        let restart_button = self.imp().restart_button.clone();
+        self.connect_action_button(SystemCtrlAction::Restart, &restart_button);
+        let enable_button = self.imp().enable_button.clone();
+        self.connect_action_button(SystemCtrlAction::Enable, &enable_button);
+        let disable_button = self.imp().disable_button.clone();
+        self.connect_action_button(SystemCtrlAction::Disable, &disable_button);
+
+        self.hide_action_buttons();
+        self.imp().view_unit_button.set_sensitive(false);
+    }
+
+    fn connect_action_button(&self, action: SystemCtrlAction, button: &Button) {
+        button.connect_clicked(clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| {
+                window.handle_action_click(action);
+            }
+        ));
+    }
+
+    fn handle_action_click(&self, action: SystemCtrlAction) {
+        let Some(unit) = self.imp().selected_unit.borrow().clone() else {
+            return;
         };
 
-        button.set_visible(true);
+        match action {
+            SystemCtrlAction::Start => systemd::start(unit.clone()),
+            SystemCtrlAction::Stop => systemd::stop(unit.clone()),
+            SystemCtrlAction::Restart => systemd::restart(unit.clone()),
+            SystemCtrlAction::Enable => systemd::enable(unit.clone()),
+            SystemCtrlAction::Disable => systemd::disable(unit.clone()),
+        }
+
+        self.refresh_units();
     }
 
-    fn disable_button(button: &Button) {
-        button.set_visible(false);
+    fn refresh_units(&self) {
+        Self::start_await_update(self.list_store(), self.imp().overlay.clone());
     }
 }

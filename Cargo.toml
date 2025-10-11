@@ -1,17 +1,17 @@
 [package]
 name = "systemd-gtk"
-version = "0.1.0"
-edition = "2021"
+version = "0.1.1"
+edition = "2024"
 
 [dependencies]
-gtk = { version = "0.9", package = "gtk4", features = ["gnome_44"] }
-adw = { version = "0.7", package = "libadwaita", features = ["v1_5"] }
-async-channel = { version = "2.3", features = [] }
+gtk = { version = "0.10", package = "gtk4", features = ["gnome_48"] }
+adw = { version = "0.8", package = "libadwaita", features = ["v1_5"] }
+async-channel = { version = "2.5.0", features = [] }
 systemctl = { git = "https://github.com/Journeycorner/systemctl", branch = "main", features = [] }
-strum = { version = "0.26", features = ["derive"] }
+strum = { version = "0.27", features = ["derive"] }
 
 [build-dependencies]
-glib-build-tools = "0.20.0"
+glib-build-tools = "0.21.0"
 
 [profile.release-lto]
 inherits = "release"

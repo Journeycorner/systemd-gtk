@@ -25,7 +25,7 @@ enum State {
     Reloading,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum SystemCtrlAction {
     Start,
     Stop,
@@ -36,17 +36,20 @@ pub enum SystemCtrlAction {
 
 impl SystemCtrlAction {
     pub fn available_actions(unit_object: &UnitObject) -> Vec<SystemCtrlAction> {
-        let state: State = State::from_str(unit_object.state().as_str()).unwrap();
-        use crate::systemd::SystemCtrlAction::*;
-        match state {
-            State::Active => vec![Stop, Restart, Disable],
-            State::Inactive => vec![Start, Enable],
-            State::Failed => vec![],
-            State::Activating => vec![],
-            State::Deactivating => vec![],
-            State::Maintenance => vec![],
-            State::Reloading => vec![],
-        }
+        State::from_str(unit_object.state().as_str())
+            .map(|state| {
+                use crate::systemd::SystemCtrlAction::*;
+                match state {
+                    State::Active => vec![Stop, Restart, Disable],
+                    State::Inactive => vec![Start, Enable],
+                    State::Failed => vec![],
+                    State::Activating => vec![],
+                    State::Deactivating => vec![],
+                    State::Maintenance => vec![],
+                    State::Reloading => vec![],
+                }
+            })
+            .unwrap_or_default()
     }
 }
 
