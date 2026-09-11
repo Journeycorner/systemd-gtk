@@ -1,0 +1,52 @@
+# Maintainer: Florian Reisecker <florian[dot]reisecker[at]gmail[dot]com>
+pkgname=systemd-gtk-git
+pkgver=0.1.1.r47.ga45604b
+pkgrel=1
+pkgdesc='System and user unit manager built with Relm4 and libadwaita'
+arch=('x86_64')
+url='https://github.com/Journeycorner/systemd-gtk'
+license=('0BSD')
+depends=('gtk4>=4.22' 'libadwaita>=1.9' 'glib2>=2.88' 'systemd' 'dbus')
+makedepends=('git' 'rustup' 'desktop-file-utils')
+optdepends=('polkit: authorization for system unit changes; a desktop authentication agent is also required')
+provides=('systemd-gtk')
+conflicts=('systemd-gtk')
+source=("systemd-gtk::git+$url.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/systemd-gtk"
+  local version
+  version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n1)
+  printf '%s.r%s.g%s' "$version" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+  export CARGO_TARGET_DIR="$srcdir/target"
+  cd "$srcdir/systemd-gtk"
+  cargo fetch --locked
+}
+
+build() {
+  # makepkg exports RUSTFLAGS, which would otherwise shadow repository config.
+  export RUSTFLAGS="${RUSTFLAGS:-} -C target-cpu=native"
+  export CARGO_TARGET_DIR="$srcdir/target"
+  cd "$srcdir/systemd-gtk"
+  cargo build --frozen --release
+}
+
+check() {
+  export RUSTFLAGS="${RUSTFLAGS:-} -C target-cpu=native"
+  export CARGO_TARGET_DIR="$srcdir/target"
+  cd "$srcdir/systemd-gtk"
+  cargo test --frozen
+  desktop-file-validate data/systemd-gtk.desktop
+}
+
+package() {
+  cd "$srcdir/systemd-gtk"
+  install -Dm755 "$srcdir/target/release/systemd-gtk" "$pkgdir/usr/bin/systemd-gtk"
+  install -Dm644 data/app-icon.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/com.journeycorner.systemd-gtk.png"
+  install -Dm644 data/systemd-gtk.desktop "$pkgdir/usr/share/applications/com.journeycorner.systemd-gtk.desktop"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

@@ -1,35 +1,17 @@
-mod systemd;
-mod table;
-mod window;
-
-use crate::window::Window;
-use adw::prelude::*;
-use adw::{gio, glib, Application};
-
-const APP_ID: &str = "com.journeycorner.systemd-gtk";
-
-fn main() -> glib::ExitCode {
-    // Register and include resources
-    gio::resources_register_include!("systemd-gtk.gresource")
-        .expect("Failed to register resources.");
-
-    // Build application
-    let app = Application::builder().application_id(APP_ID).build();
-
-    // Connect to signals
-    app.connect_activate(build_ui);
-    setup_shortcuts(&app);
-
-    // Run application
-    app.run()
-}
-fn build_ui(app: &adw::Application) {
-    // Create new window and present it
-    let window = Window::new(app);
-    window.present();
-}
-
-fn setup_shortcuts(app: &Application) {
-    app.set_accels_for_action("win.search_bar_show", &["<Ctrl>f"]);
-    app.set_accels_for_action("win.view_unit_action", &["Return"]);
+fn main() -> std::process::ExitCode {
+    let args: Vec<_> = std::env::args_os().skip(1).collect();
+    match args.as_slice() {
+        [] => systemd_gtk::ui::run(),
+        [arg] if arg == "--version" || arg == "-V" => {
+            println!("systemd-gtk {}", env!("CARGO_PKG_VERSION"))
+        }
+        [arg] if arg == "--help" || arg == "-h" => println!(
+            "systemd-gtk — browse and manage systemd units\n\nUsage: systemd-gtk [OPTION]\n\n  -V, --version      Print version\n  -h, --help         Print help\n\nWith no options, open the application. Run as your normal user, not root."
+        ),
+        _ => {
+            eprintln!("Unknown arguments. Run systemd-gtk --help for usage.");
+            return std::process::ExitCode::FAILURE;
+        }
+    }
+    std::process::ExitCode::SUCCESS
 }

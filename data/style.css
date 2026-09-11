@@ -1,0 +1,6 @@
+/* Keep ordinary row backgrounds native; add separators only in high contrast. */
+@media (prefers-contrast: more) {
+  columnview.unit-table > listview > row {
+    border-bottom: 1px solid color-mix(in srgb, var(--view-fg-color) 35%, transparent);
+  }
+}

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/journeycorner/systemd-gtk/icons">
+    <file alias="512x512/apps/com.journeycorner.systemd-gtk.png">app-icon.png</file>
+  </gresource>
+</gresources>

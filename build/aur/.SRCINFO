@@ -1,0 +1,22 @@
+pkgbase = systemd-gtk-git
+	pkgdesc = System and user unit manager built with Relm4 and libadwaita
+	pkgver = 0.1.1.r47.ga45604b
+	pkgrel = 1
+	url = https://github.com/Journeycorner/systemd-gtk
+	arch = x86_64
+	license = 0BSD
+	makedepends = git
+	makedepends = rustup
+	makedepends = desktop-file-utils
+	depends = gtk4>=4.22
+	depends = libadwaita>=1.9
+	depends = glib2>=2.88
+	depends = systemd
+	depends = dbus
+	optdepends = polkit: authorization for system unit changes; a desktop authentication agent is also required
+	provides = systemd-gtk
+	conflicts = systemd-gtk
+	source = systemd-gtk::git+https://github.com/Journeycorner/systemd-gtk.git
+	sha256sums = SKIP
+
+pkgname = systemd-gtk-git

@@ -1,0 +1,4 @@
+[build]
+# Tune local builds for the build machine. These binaries are not portable to
+# CPUs missing its instruction sets. RUSTFLAGS can override this for distribution.
+rustflags = ["-C", "target-cpu=native"]

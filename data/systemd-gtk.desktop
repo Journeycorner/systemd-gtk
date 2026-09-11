@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=systemd-gtk
-Comment=Tiny and fast systemd GUI written in Rust using GTK4
+Comment=Browse and manage system and user units
 Type=Application
 Exec=systemd-gtk
 Terminal=false
@@ -8,6 +8,6 @@ Categories=System;
 # Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
 Keywords=System;GTK;
 # Translators: Do NOT translate or transliterate this text (this is an icon file name)!
-Icon=systemd-gtk
+Icon=com.journeycorner.systemd-gtk
 StartupNotify=true
-X-Purism-FormFactor=Workstation;Mobile;
+X-Purism-FormFactor=Workstation;

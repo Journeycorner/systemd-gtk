@@ -1,0 +1,38 @@
+name: Rust
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Install build and headless test dependencies
+        run: |
+          pacman -Syu --noconfirm --needed git rustup gtk4 libadwaita dbus \
+            xorg-server-xvfb xorg-xauth mesa desktop-file-utils
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pinned Rust toolchain
+        run: rustup show
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+      - name: Unit and isolated D-Bus tests
+        run: cargo test --locked
+      - name: Headless GTK tests
+        run: bash scripts/test-ui.sh
+      - name: Release build
+        run: cargo build --locked --release
+      - name: Validate desktop entry and packaging syntax
+        run: |
+          desktop-file-validate data/systemd-gtk.desktop
+          for script in build/PKGBUILD build/aur/PKGBUILD scripts/*.sh; do
+            bash -n "$script"
+          done
+          bash scripts/test-packaging.sh

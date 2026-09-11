@@ -4,21 +4,43 @@ pkgname=systemd-gtk
 pkgver=0.1.1
 pkgrel=1
 arch=('x86_64')
-pkgdesc="Tiny and fast systemd GUI written in Rust using GTK4"
+pkgdesc="System and user unit manager built with Relm4 and libadwaita"
 url="https://github.com/Journeycorner/systemd-gtk"
 license=('0BSD')
-conflicts=(systemd-gtk)
-provides=(systemd-gtk)
-source=("../")
-source_x86_64=("https://github.com/Journeycorner/systemd-gtk")
+depends=('gtk4>=4.22' 'libadwaita>=1.9' 'glib2>=2.88' 'systemd' 'dbus')
+makedepends=('rustup' 'desktop-file-utils')
+optdepends=('polkit: authorization for system unit changes; a desktop authentication agent is also required')
+# scripts/package-arch.sh snapshots the current checkout beside this recipe.
+# The archive deliberately includes uncommitted source changes.
+source=('systemd-gtk.tar.gz')
 sha256sums=('SKIP')
 
-package_systemd-gtk() {
-  depends=('gnome' 'systemd' 'rustup')
-  optdepends=()
+prepare() {
+  export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$srcdir/target}"
+  cd "$srcdir"
+  cargo fetch --locked
+}
 
-  cargo build --profile release-lto
-  install -D -m755 target/release-lto/systemd-gtk /usr/bin/systemd-gtk
-  install -D -m644 data/icon.svg /usr/share/pixmaps/systemd-gtk.svg
-  desktop-file-install -m 644 --dir /usr/share/applications/ data/systemd-gtk.desktop
+build() {
+  # makepkg exports RUSTFLAGS, which would otherwise shadow repository config.
+  export RUSTFLAGS="${RUSTFLAGS:-} -C target-cpu=native"
+  export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$srcdir/target}"
+  cd "$srcdir"
+  cargo build --frozen --release
+}
+
+check() {
+  export RUSTFLAGS="${RUSTFLAGS:-} -C target-cpu=native"
+  export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$srcdir/target}"
+  cd "$srcdir"
+  cargo test --frozen
+  desktop-file-validate data/systemd-gtk.desktop
+}
+
+package() {
+  cd "$srcdir"
+  install -D -m755 "${CARGO_TARGET_DIR:-$srcdir/target}/release/systemd-gtk" "$pkgdir/usr/bin/systemd-gtk"
+  install -D -m644 data/app-icon.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/com.journeycorner.systemd-gtk.png"
+  install -D -m644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -D -m644 data/systemd-gtk.desktop "$pkgdir/usr/share/applications/com.journeycorner.systemd-gtk.desktop"
 }

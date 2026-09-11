@@ -2,18 +2,35 @@
 name = "systemd-gtk"
 version = "0.1.1"
 edition = "2024"
-
-[dependencies]
-gtk = { version = "0.10", package = "gtk4", features = ["gnome_48"] }
-adw = { version = "0.8", package = "libadwaita", features = ["v1_5"] }
-async-channel = { version = "2.5.0", features = [] }
-systemctl = { git = "https://github.com/Journeycorner/systemctl", branch = "main", features = [] }
-strum = { version = "0.27", features = ["derive"] }
+rust-version = "1.98"
+description = "A native GTK interface for system and user systemd units"
+license = "0BSD"
+repository = "https://github.com/Journeycorner/systemd-gtk"
+readme = "README.md"
+keywords = ["systemd", "gtk", "relm4", "linux"]
+categories = ["gui"]
+include = ["src/**", "data/**", "docs/**", ".cargo/config.toml", "build.rs", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "README.md", "LICENSE", "tests/**"]
 
 [build-dependencies]
-glib-build-tools = "0.21.0"
+glib-build-tools = "0.22"
 
-[profile.release-lto]
-inherits = "release"
-lto = "fat"
+[features]
+ui-tests = []
+
+[dependencies]
+relm4 = { version = "0.11.0", features = ["libadwaita", "gnome_50"] }
+zbus = { version = "5.19", default-features = false, features = ["tokio"] }
+tokio = { version = "1", features = ["fs", "sync", "time", "macros", "rt-multi-thread"] }
+futures-util = "0.3"
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[[test]]
+name = "ui"
+required-features = ["ui-tests"]
+
+[profile.release]
+lto = "thin"
 strip = "symbols"
